@@ -1,0 +1,3 @@
+This directory contains header files and the jags import library for windows.
+It enables rjags to be built without a full installation of JAGS on the
+build machine.
