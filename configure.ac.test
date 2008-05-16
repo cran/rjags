@@ -2,6 +2,13 @@ AC_INIT([rjags], [1.0.2])
 
 AC_PREFIX_PROGRAM(jags)
 
+PKG_PROG_PKG_CONFIG()
+
+if test [-n "$PKG_CONFIG"]; then
+   PKG_CHECK_MODULES(JAGS, [jags = $PACKAGE_VERSION])
+   JAGS_MODULES=`$PKG_CONFIG --variable=moduledir jags`
+fi
+
 #Set optional include path with option --with-jags-include or
 #environment variable JAGS_INCLUDE
 
@@ -13,21 +20,18 @@ if test [ -n "$jags_include_path" ] ; then
    JAGS_INCLUDE=${jags_include_path}
 else
    if test [ -z "${JAGS_INCLUDE}" ] ; then
-      if test [ "$prefix" == "NONE" ]; then
-         AC_MSG_ERROR("JAGS headers not found. Use --with-jags-include configure option")
-      else
-         JAGS_INCLUDE=${prefix}/include/JAGS
+      if test [ - z "${JAGS_CFLAGS}" ] ; then
+         if test [ "$prefix" == "NONE" ] ; then
+            AC_MSG_ERROR("JAGS headers not found. Use --with-jags-include configure option")
+         else
+            JAGS_INCLUDE=${prefix}/include/JAGS
+         fi
       fi
    fi
 fi
 
 #Set optional library path with option --with-jags-lib or
 #environment variable JAGS_LIBS
-
-R_HOME_SAVE=R_HOME
-R_HOME=""
-: ${LIBnn=`R CMD config LIBnn`}
-R_HOME=R_HOME_SAVE
 
 AC_ARG_WITH([jags-lib],
             AC_HELP_STRING([--with-jags-lib=LIB_PATH],
@@ -37,12 +41,19 @@ if test [ -n "$jags_lib_path" ] ; then
    JAGS_LIB=$jags_lib_path
 else
    if test [ -z "${JAGS_LIB}" ] ; then
-      if test [ "${prefix}" == "NONE" ] ; then 
-         AC_MSG_ERROR("JAGS library not found. Use --with-jags-lib configure option")
-      else
-         JAGS_LIB=${prefix}/${LIBnn}
+      if test [ -z "${JAGS_LIBS}" ] ; then
+         if test [ "${prefix}" == "NONE" ] ; then 
+            AC_MSG_ERROR("JAGS library not found. Use --with-jags-lib configure option")
+         else
+            JAGS_LIB=${prefix}/lib
+         fi
       fi
    fi
+fi
+
+if test [ -n "${JAGS_LIB}" ] ; then
+   AC_CHECK_LIB([jags],[jags_version],[],
+                [AC_MSG_ERROR("JAGS library not found. Use --with-jags-lib configure option")])
 fi
 
 #Finally, set optional module directory using --with-jags-modules or
@@ -57,14 +68,21 @@ if test [ -n "$jags_mod_path" ] ; then
 else
    if test [ -z "${JAGS_MODULES}" ] ; then
       JAGS_MODULES=${JAGS_LIB}/JAGS/modules
-      if test [! -d ${JAGS_MODULES} ]; then
-         AC_MSG_ERROR("JAGS module directory not found. Use --with-jags-modules configure option")
-      fi
    fi
 fi
 
-AC_SUBST(JAGS_INCLUDE)
-AC_SUBST(JAGS_LIB)
+##Write out flags
+
+if test [ -n "${JAGS_INCLUDE}" ] ; then
+   JAGS_CFLAGS=-I ${JAGS_INCLUDE}
+fi
+
+if test [ -n "${JAGS_LIB}" ] ; then
+   JAGS_LIBS=-I ${JAGS_LIB}
+fi
+
+AC_SUBST(JAGS_CFLAGS)
+AC_SUBST(JAGS_LIBS)
 AC_SUBST(JAGS_MODULES)
 
 AC_OUTPUT(src/Makevars)

@@ -1,32 +1,29 @@
 .onLoad <- function(lib, pkg)
 {
-  if (is.null(resolveKey("SOFTWARE\\JAGS-@PACKAGE_VERSION@\\Install_Dir",
-                         top="HKEY_LOCAL_MACHINE")))
-    {
-        stop("Failed to locate JAGS @PACKAGE_VERSION@ installation")
+    regkey <- try(readRegistry("SOFTWARE\\JAGS-@PACKAGE_VERSION@",
+                               hive = "HLM", maxdepth = 1), silent = TRUE)
+    if(!inherits(regkey, "try-error"))
+      jags.home <- regkey[["Install_Dir"]]
+    else
+      stop("Failed to locate JAGS @PACKAGE_VERSION@ installation")
+
+    ## Add jags.home to the windows PATH, if not already present
+
+    bindir <- file.path(jags.home, "bin")
+    path <- Sys.getenv("PATH")
+    split.path <- strsplit(path, .Platform$path.sep)$PATH
+    if (!any(split.path == bindir)) {
+        path <- paste(path, bindir, sep=.Platform$path.sep)
+        Sys.setenv("PATH"=path)
     }
-  
-  jags.home <- getRegistryValue("SOFTWARE\\JAGS-@PACKAGE_VERSION@",
-                                "Install_Dir",
-                                top="HKEY_LOCAL_MACHINE")
-
-  ## Add jags.home to the windows PATH, if not already present
-
-  bindir <- file.path(jags.home, "bin")
-  path <- Sys.getenv("PATH")
-  split.path <- strsplit(path, .Platform$path.sep)$PATH
-  if (!any(split.path == bindir)) {
-      path <- paste(path, bindir, sep=.Platform$path.sep)
-      Sys.setenv("PATH"=path)
-  }
-      
-  ## Set the module directory, if the option jags.moddir is not already set
-
-  if (is.null(getOption("jags.moddir"))) {
-      options("jags.moddir" = file.path(jags.home, "modules"))
-  }
-  jags.module(c("basemod","bugs"))
-
-  library.dynam("rjags", pkg, lib, local=FALSE)
-  .Call("init_jags_console", PACKAGE="rjags")
+    
+    ## Set the module directory, if the option jags.moddir is not already set
+    
+    if (is.null(getOption("jags.moddir"))) {
+        options("jags.moddir" = file.path(jags.home, "modules"))
+    }
+    jags.module(c("basemod","bugs"))
+    
+    library.dynam("rjags", pkg, lib, local=FALSE)
+    .Call("init_jags_console", PACKAGE="rjags")
 }
