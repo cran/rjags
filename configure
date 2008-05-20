@@ -1747,6 +1747,11 @@ fi
 #Set optional library path with option --with-jags-lib or
 #environment variable JAGS_LIBS
 
+R_HOME_SAVE=R_HOME
+R_HOME=""
+: ${LIBnn=`R CMD config LIBnn`}
+R_HOME=R_HOME_SAVE
+
 
 # Check whether --with-jags-lib was given.
 if test "${with_jags_lib+set}" = set; then
@@ -1762,7 +1767,7 @@ else
 echo "$as_me: error: \"JAGS library not found. Use --with-jags-lib configure option\"" >&2;}
    { (exit 1); exit 1; }; }
       else
-         JAGS_LIB=${prefix}/lib
+         JAGS_LIB=${prefix}/${LIBnn}
       fi
    fi
 fi
@@ -1781,6 +1786,11 @@ if test  -n "$jags_mod_path"  ; then
 else
    if test  -z "${JAGS_MODULES}"  ; then
       JAGS_MODULES=${JAGS_LIB}/JAGS/modules
+      if test ! -d ${JAGS_MODULES} ; then
+         { { echo "$as_me:$LINENO: error: \"JAGS module directory not found. Use --with-jags-modules configure option\"" >&5
+echo "$as_me: error: \"JAGS module directory not found. Use --with-jags-modules configure option\"" >&2;}
+   { (exit 1); exit 1; }; }
+      fi
    fi
 fi
 
