@@ -54,12 +54,12 @@ static int intArg(SEXP arg)
     return i;
 }
 
-static char const *stringArg(SEXP arg)
+static char const *stringArg(SEXP arg, unsigned int i = 0)
 {
     if (!isString(arg)) {
 	error("Invalid string parameter");
     }
-    return R_CHAR(STRING_ELT(arg,0));
+    return R_CHAR(STRING_ELT(arg,i));
 }
 
 static bool boolArg(SEXP arg)
@@ -331,7 +331,7 @@ extern "C" {
 	printMessages(status);
 	return R_NilValue;
     }
-  
+/*  
     void do_update(Console *console, int niter)
     {
 	int width = 50;
@@ -407,24 +407,59 @@ extern "C" {
 	    warning("Adaptation incomplete");
 	}
     }
+*/
 
-    SEXP update(SEXP ptr, SEXP rniter, SEXP adapt)
+    SEXP is_adapting(SEXP ptr)
+    {
+	Console *console = ptrArg(ptr);
+	return ScalarLogical(console->isAdapting());
+    }
+
+    SEXP adapt_off(SEXP ptr)
+    {
+	Console *console = ptrArg(ptr);
+	bool status = true;
+	console->adaptOff(status);
+	return ScalarLogical(status);
+    }
+
+    SEXP update(SEXP ptr, SEXP rniter)
     {
         int niter = intArg(rniter);
         Console *console = ptrArg(ptr);
-	if (boolArg(adapt) && !console->isAdapting()) {
-	    return R_NilValue;
+	if (!console->update(niter)) {
+	    Rprintf("\n");
+	    printMessages(false);
 	}
-	do_update(console, niter);
 	return R_NilValue;
     }
 
     
-    SEXP set_monitor(SEXP ptr, SEXP name, SEXP thin, SEXP type)
+    SEXP set_monitors(SEXP ptr, SEXP names, SEXP thin, SEXP type)
     {
-	bool status = ptrArg(ptr)->setMonitor(stringArg(name), Range(), 
-					      intArg(thin), stringArg(type));
-	printMessages(status);
+	if (!isString(names)) {
+	    error("names must be a character vector");
+	}
+	unsigned int n = length(names);
+	unsigned int i;
+	for (i = 0; i < n; ++i) {
+	    bool status = ptrArg(ptr)->setMonitor(stringArg(names,i), Range(), 
+						  intArg(thin), 
+						  stringArg(type));
+	    if (!status)
+		break;
+	}
+	if (i < n) {
+	    //Failure to set monitor i: unwind the others
+	    for (unsigned int j = i; j > 0; --j) {
+		ptrArg(ptr)->clearMonitor(stringArg(names, j - 1), Range(),
+					  stringArg(type));
+	    }
+	    printMessages(false);
+	}
+	else {
+	    printMessages(true);
+	}
 	return R_NilValue;
     }
 

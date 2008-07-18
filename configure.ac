@@ -1,4 +1,4 @@
-AC_INIT([rjags], [1.0.2])
+AC_INIT([rjags], [1.0.3])
 
 AC_PREFIX_PROGRAM(jags)
 

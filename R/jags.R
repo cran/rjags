@@ -145,10 +145,46 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                   {
                       .Call("get_iter", p, PACKAGE="rjags")
                   },
-                  "update" = function(niter, by, adapt=FALSE) {
+                  "update" = function(niter, by=niter/50, adapt=FALSE) {
+
+                    adapting <- .Call("is_adapting", p, PACKAGE="rjags")
+                    if (adapt & !adapting)
+                      return(invisible(NULL))
+
+                    if (niter <= 0)
+                      stop("niter must be positive")
+                    niter <- floor(niter)
+
+                    if (by <= 0)
+                      stop("by must be positive")
+                    by <- ceiling(by)
+
+                    if (interactive()) {
+                      #Show progress bar
+                      pb <- txtProgressBar(0, niter, style=1,width=50,
+                                           char=ifelse(adapting,"+","*"))
+                      n <- niter
+                      while (n > 0) {
+                        .Call("update", p, min(n,by), adapt, PACKAGE="rjags")
+                        n <- n - by
+                        setTxtProgressBar(pb, niter - n)
+                        model.state <<- .Call("get_state", p, PACKAGE="rjags")
+                      }
+                      close(pb)
+                    }
+                    else {
+                      #Suppress progress bar
                       .Call("update", p, niter, adapt, PACKAGE="rjags")
                       model.state <<- .Call("get_state", p, PACKAGE="rjags")
-                      invisible(NULL)
+                    }
+                    
+                    if (adapting) {
+                      if (!.Call("adapt_off", p, PACKAGE="rjags")) {
+                        warning("Adaptation incomplete");
+                      }
+                    }
+                    
+                    invisible(NULL)
                   },
                   "recompile" = function() {
                       ## Clear the console
@@ -177,13 +213,14 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                           }
                           .Call("initialize", p, PACKAGE="rjags")
                           #Redo adaptation
+                          cat("Adapting\n")
                           .Call("update", p, n.adapt, TRUE, PACKAGE="rjags")
                           model.state <<- .Call("get_state", p, PACKAGE="rjags")
                       }
                       invisible(NULL)
                   })
     class(model) <- "jags"
-    model$update(as.integer(n.adapt), adapt=TRUE)
+    model$update(n.adapt, adapt=TRUE)
     return(model)
 }
 
@@ -208,12 +245,10 @@ jags.samples <-
               type, PACKAGE="rjags")
     }
     else {
-        for (i in seq(along=variable.names)) {
-            .Call("set_monitor", model$ptr(), variable.names[i],
-                  as.integer(thin), type, PACKAGE="rjags")
-        }
+        .Call("set_monitors", model$ptr(), variable.names,
+              as.integer(thin), type, PACKAGE="rjags")
     }
-    model$update(as.integer(n.iter))
+    update(model, n.iter)
     ans <- .Call("get_monitored_values", model$ptr(), type, PACKAGE="rjags")
     for (i in seq(along=ans)) {
         class(ans[[i]]) <- "mcarray"

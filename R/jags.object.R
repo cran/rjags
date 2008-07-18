@@ -1,9 +1,12 @@
-update.jags <- function(object, niter = 1, ...)
+update.jags <- function(object, niter = 1, by, ...)
 {
     if (!is.numeric(niter) || niter < 1) {
         stop("Invalid niter")
     }
-    object$update(niter)
+    if (missing(by))
+	by <- floor(niter/50)
+
+    object$update(niter, by)
     invisible(NULL)
 }
     

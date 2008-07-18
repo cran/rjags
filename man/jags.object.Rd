@@ -7,12 +7,13 @@
   described using the BUGS language. 
 }
 \usage{
-\method{update}{jags}(object, niter=1, \ldots)
+\method{update}{jags}(object, niter=1, by, \ldots)
 \method{coef}{jags}(object, chain=1, \ldots)
 }
 \arguments{
   \item{object}{a \code{jags} model object}
   \item{niter}{number of iterations to update the model}
+  \item{by}{update frequency for progress bar.  See Details}
   \item{chain}{chain number to query}
   \item{\ldots}{additional arguments to the call (ignored)}
 }
@@ -28,6 +29,13 @@
   array that contains an unobserved Node. Elements corresponding to
   observed Nodes or deterministic Nodes are given missing values.
 }
+\details{
+  
+  Since MCMC calculations are typically long, a progress bar is displayed
+  during the call to \code{update}. The progress bar is refreshed every
+  \code{by} iterations. If R is not being used interactively then the
+  progress bar is suppressed.
+
+}
 \author{Martyn Plummer}
 \keyword{models}
-
