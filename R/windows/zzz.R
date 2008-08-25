@@ -1,11 +1,19 @@
+supported.versions <- c("1.0.3", "1.0.2")
+
 .onLoad <- function(lib, pkg)
 {
-    regkey <- try(readRegistry("SOFTWARE\\JAGS-@PACKAGE_VERSION@",
-                               hive = "HLM", maxdepth = 1), silent = TRUE)
-    if(!inherits(regkey, "try-error"))
-      jags.home <- regkey[["Install_Dir"]]
-    else
-      stop("Failed to locate JAGS @PACKAGE_VERSION@ installation")
+    for (i in seq(along=supported.versions)) {
+        ## FIXME - We should user SOFTWARE\JAGS\version in future
+        key <- paste("SOFTWARE\\JAGS-", supported.versions[i], sep="")
+        regkey <- try(readRegistry(key, hive = "HLM", maxdepth = 1),
+                      silent = TRUE)
+        if(!inherits(regkey, "try-error"))
+            break
+    }
+    if (inherits(regkey, "try-error"))
+        stop("Failed to locate a supported JAGS installation")
+    
+    jags.home <- regkey[["Install_Dir"]]
 
     ## Add jags.home to the windows PATH, if not already present
 
