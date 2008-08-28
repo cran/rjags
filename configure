@@ -1744,13 +1744,26 @@ echo "$as_me: error: \"JAGS headers not found. Use --with-jags-include configure
    fi
 fi
 
+# There is no consensus on where 64- versus 32-bit libraries should be
+# installed.  We take a hint from R, assuming that if R is installed
+# in, say, /usr/LIBnn/R then we can find the jags library in
+# ${prefix}/LIBnn.
+#
+# This is a reasonable assumption if both JAGS and R have been
+# properly packaged, but may not be true if either has been manually
+# installed. The user can set the environment variable LIBnn to
+# override this.
+
+if test -z "${LIBnn}"; then
+   if test -z "${R_HOME}"; then
+      echo "R_HOME is not defined"
+      exit 1
+   fi
+   LIBnn=`${R_HOME}/bin/R CMD config LIBnn`
+fi
+
 #Set optional library path with option --with-jags-lib or
 #environment variable JAGS_LIBS
-
-R_HOME_SAVE=R_HOME
-R_HOME=""
-: ${LIBnn=`R CMD config LIBnn`}
-R_HOME=R_HOME_SAVE
 
 
 # Check whether --with-jags-lib was given.
@@ -1763,8 +1776,8 @@ if test  -n "$jags_lib_path"  ; then
 else
    if test  -z "${JAGS_LIB}"  ; then
       if test  "${prefix}" == "NONE"  ; then
-         { { echo "$as_me:$LINENO: error: \"JAGS library not found. Use --with-jags-lib configure option\"" >&5
-echo "$as_me: error: \"JAGS library not found. Use --with-jags-lib configure option\"" >&2;}
+         { { echo "$as_me:$LINENO: error: \"Location of JAGS library not defined. Use --with-jags-lib configure option\"" >&5
+echo "$as_me: error: \"Location of JAGS library not defined. Use --with-jags-lib configure option\"" >&2;}
    { (exit 1); exit 1; }; }
       else
          JAGS_LIB=${prefix}/${LIBnn}
