@@ -13,7 +13,7 @@ diffdic(dic1, dic2)
 }
 \details{
   A \code{diffdic} object represents the difference in penalized
-  deviance between two models. A negative value indicatest that
+  deviance between two models. A negative value indicates that
   \code{dic1} is preferred and vice versa.
 }
 \value{
@@ -27,7 +27,7 @@ diffdic(dic1, dic2)
 \note{
   The problem of determining what is a noteworthy difference
   in DIC (or other penalized deviance) between two models is
-  currently unsolved.  Following the reults of Ripley (1996) on
+  currently unsolved.  Following the results of Ripley (1996) on
   the Akaike Information Criterion, Plummer (2008) argues that 
   there is no absolute scale for comparison of two penalized
   deviance statistics, and proposes that the difference should
