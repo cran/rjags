@@ -13,7 +13,7 @@ if test [ -n "$jags_include_path" ] ; then
    JAGS_INCLUDE=${jags_include_path}
 else
    if test [ -z "${JAGS_INCLUDE}" ] ; then
-      if test [ "$prefix" == "NONE" ]; then
+      if test [ "$prefix" = "NONE" ]; then
          AC_MSG_ERROR("JAGS headers not found. Use --with-jags-include configure option")
       else
          JAGS_INCLUDE=${prefix}/include/JAGS
@@ -50,7 +50,7 @@ if test [ -n "$jags_lib_path" ] ; then
    JAGS_LIB=$jags_lib_path
 else
    if test [ -z "${JAGS_LIB}" ] ; then
-      if test [ "${prefix}" == "NONE" ] ; then 
+      if test [ "${prefix}" = "NONE" ] ; then 
          AC_MSG_ERROR("Location of JAGS library not defined. Use --with-jags-lib configure option")
       else
          JAGS_LIB=${prefix}/${LIBnn}

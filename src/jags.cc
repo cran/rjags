@@ -3,6 +3,7 @@
 #include <sstream>
 #include <algorithm>
 #include <vector>
+#include <stdexcept>
 
 #include <Console.h>
 #include <util/nainf.h>
@@ -11,6 +12,7 @@ using std::string;
 using std::map;
 using std::pair;
 using std::vector;
+using std::copy;
 
 /* Workaround length being remapped to Rf_length
    by the preprocessor */
@@ -110,7 +112,7 @@ static void printMessages(bool status)
 static void setSArrayValue(SArray &sarray, SEXP e)
 {
     vector<double> v(length(e));
-    std::copy(NUMERIC_POINTER(e), NUMERIC_POINTER(e) + length(e), v.begin());
+    copy(NUMERIC_POINTER(e), NUMERIC_POINTER(e) + length(e), v.begin());
     sarray.setValue(v);
 }
 
@@ -167,6 +169,34 @@ static void writeDataTable(SEXP data, map<string,SArray> &table)
 	UNPROTECT(3);
     }
     UNPROTECT(1);
+}
+
+static Range makeRange(SEXP lower, SEXP upper)
+{
+    if (lower == R_NilValue || upper == R_NilValue) {
+	return Range();
+    }
+    if (length(lower) != length(upper)) {
+	error("length mismatch between lower and upper limits");
+    }
+    int n = length(lower);
+
+    SEXP il, iu;
+    PROTECT(il = AS_INTEGER(lower));
+    PROTECT(iu = AS_INTEGER(upper));
+    vector<int> lvec(n), uvec(n);
+    copy(INTEGER(il), INTEGER(il) + n, lvec.begin());
+    copy(INTEGER(iu), INTEGER(iu) + n, uvec.begin());
+    UNPROTECT(2);
+
+    Range r;
+    try {
+	r = Range(lvec, uvec);
+    }
+    catch (std::logic_error except) {                                   
+	error("Invalid range");
+    }
+    return r;
 }
 
 #include <iostream>
@@ -434,16 +464,21 @@ extern "C" {
 	return R_NilValue;
     }
 
-    
-    SEXP set_monitors(SEXP ptr, SEXP names, SEXP thin, SEXP type)
+    SEXP set_monitors(SEXP ptr, SEXP names, SEXP lower, SEXP upper, 
+		      SEXP thin, SEXP type)
     {
 	if (!isString(names)) {
 	    error("names must be a character vector");
 	}
+
 	unsigned int n = length(names);
+	if (length(lower) != n || length(upper) != n) {
+	    error("length of names must match length of lower and upper");
+	}
 	unsigned int i;
 	for (i = 0; i < n; ++i) {
-	    bool status = ptrArg(ptr)->setMonitor(stringArg(names,i), Range(), 
+	    Range range = makeRange(VECTOR_ELT(lower, i), VECTOR_ELT(upper, i));
+	    bool status = ptrArg(ptr)->setMonitor(stringArg(names,i), range, 
 						  intArg(thin), 
 						  stringArg(type));
 	    if (!status)
@@ -451,8 +486,9 @@ extern "C" {
 	}
 	if (i < n) {
 	    //Failure to set monitor i: unwind the others
+	    Range range = makeRange(VECTOR_ELT(lower, i), VECTOR_ELT(upper, i));
 	    for (unsigned int j = i; j > 0; --j) {
-		ptrArg(ptr)->clearMonitor(stringArg(names, j - 1), Range(),
+		ptrArg(ptr)->clearMonitor(stringArg(names, j - 1), range,
 					  stringArg(type));
 	    }
 	    printMessages(false);
@@ -471,9 +507,10 @@ extern "C" {
 	return R_NilValue;
     }
 
-    SEXP clear_monitor(SEXP ptr, SEXP name, SEXP type)
+    SEXP clear_monitor(SEXP ptr, SEXP name, SEXP lower, SEXP upper, SEXP type)
     {
-	bool status = ptrArg(ptr)->clearMonitor(stringArg(name), Range(), 
+        Range range = makeRange(lower, upper);
+	bool status = ptrArg(ptr)->clearMonitor(stringArg(name), range, 
 						stringArg(type));
 	printMessages(status);
 	return R_NilValue;

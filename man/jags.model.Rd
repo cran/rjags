@@ -35,22 +35,25 @@
   model, and the functions can be used to query or modify the model
   state.
   \item{ptr()}{Returns an external pointer to an object created by
-  the JAGS library}
+    the JAGS library}
   \item{data()}{Returns a list containing the data that defines
-  the observed nodes in the model}
+    the observed nodes in the model}
   \item{model()}{Returns a character vector containing the BUGS-language
-  representation of the model}
-  \item{state()}{Returns a list of length equal to the number of
-  parallel chains in the model. Each element of the list is itself
-  a list containing the current parameter values in that chain.
-  This is not the user-level interface: use the \code{\link{coef.jags}}
-  method instead.}
-  \item{update(niter,by,adapt)}{Updates the model by \code{niter}
-  iterations. By default a progress bar is printed to the screen, with
-  an update every \code{by} iterations. To suppress the update bar, use 
-  \code{by=0}. The \code{adapt} argument is used for adaptive mode.
-  This is not the user-level interface: use the \code{\link{update.jags}}
-  method instead.}
+    representation of the model}
+  \item{state(internal=FALSE)}{Returns a list of length equal to the
+    number of parallel chains in the model. Each element of the list is
+    itself a list containing the current parameter values in that chain.
+    if \code{internal=TRUE} then the returned lists also include the RNG
+    names (\code{.RNG.name}) and states (\code{.RNG.state}).  This is
+    not the user-level interface: use the \code{\link{coef.jags}} method
+    instead.}
+  \item{update(niter, by = niter/50, adapt=FALSE)}{Updates the model by
+    \code{niter} iterations. By default a progress bar is printed to the
+    screen, with an update every \code{by} iterations. To suppress the
+    update bar, use \code{by=0}. The \code{adapt} argument is used for
+    adaptive mode.  This is not the user-level interface: use the
+    \code{\link{update.jags}} method instead.}
+  
 }
 \section{Initialization}{
   There are various ways to specify initial values for a JAGS model.
@@ -76,6 +79,37 @@
     way, initial values may be generated that depend systematically on
     the chain number.
   }
+}
+
+\section{Random number generators}{
+
+  Each chain in a model has its own random number generator (RNG).  RNGs
+  and their initial seed values are assigned automatically when the
+  model is created. The seeds are calculated from the current time, so
+  that two models created by identical calls to \code{jags.model} will
+  not, by default, produce the same output.
+
+  If you wish to make the output from the model reproducible, you may
+  specify the RNGs to be used for each chain, and their starting seeds
+  as part of the \code{inits} argument (see \code{Initialization}
+  above). This is done by supplementing the list of initial parameter
+  values for a given chain with two additional elements named
+  \code{.RNG.name}, and \code{.RNG.seed}.
+  
+  \describe{
+    \item{.RNG.name}{a character vector of length 1. The names of
+    the RNGs supplied in the base module are:
+    \itemize{
+      \item \dQuote{base::Wichmann-Hill}
+      \item \dQuote{base::Marsaglia-Multicarry}
+      \item \dQuote{base::Super-Duper}
+      \item \dQuote{base::Mersenne-Twister}
+    }
+    Further RNGs may be available if other JAGS modules are loaded.}
+    \item{.RNG.seed}{a numeric vector of length 1 containing an
+    integer value.}
+  }
+
 }
 \author{Martyn Plummer}
 \keyword{models}
