@@ -7,12 +7,12 @@
   described using the BUGS language. 
 }
 \usage{
-\method{update}{jags}(object, niter=1, by, \ldots)
+\method{update}{jags}(object, n.iter=1, by, \ldots)
 \method{coef}{jags}(object, chain=1, \ldots)
 }
 \arguments{
   \item{object}{a \code{jags} model object}
-  \item{niter}{number of iterations to update the model}
+  \item{n.iter}{number of iterations to update the model}
   \item{by}{update frequency for progress bar.  See Details}
   \item{chain}{chain number to query}
   \item{\ldots}{additional arguments to the call (ignored)}

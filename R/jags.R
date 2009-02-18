@@ -19,7 +19,7 @@ print.jags <- function(x, ...)
 }
 
 jags.model <- function(file, data=sys.frame(sys.parent()), inits,
-                       nchain = 1, n.adapt=1000)
+                       n.chains = 1, n.adapt=1000, nchain)
 {
 
     if (missing(file)) {
@@ -27,6 +27,12 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
     }
     if (!file.exists(file)) {
         stop(paste("Model file \"", file, "\" not found", sep=""))
+    }
+    if (!missing(nchain)) {
+        warning("Argument nchain in jags.model is deprecated. Use n.chains.")
+        if (missing(n.chains)) {
+            n.chains = nchain
+        }
     }
     
     p <- .Call("make_console", PACKAGE="rjags") 
@@ -59,7 +65,7 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
         stop("data must be a list or environment")
     }
     
-    .Call("compile", p, data, as.integer(nchain), TRUE, PACKAGE="rjags")
+    .Call("compile", p, data, as.integer(n.chains), TRUE, PACKAGE="rjags")
 
 ### Setting initial values
 
@@ -99,16 +105,16 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                   PACKAGE="rjags")
         }
         
-        init.values <- vector("list", nchain)
+        init.values <- vector("list", n.chains)
         
         if (is.function(inits)) {
             if (any(names(formals(inits)) == "chain")) {
-                for (i in 1:nchain) {
+                for (i in 1:n.chains) {
                     init.values[[i]] <- inits(chain=i)
                 }
             }
             else {
-                for (i in 1:nchain) {
+                for (i in 1:n.chains) {
                     init.values[[i]] <- inits()
                 }
             }
@@ -117,19 +123,19 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
 
             if (checkParameters(inits)) {
                 ## Replicate initial values for all chains
-                for (i in 1:nchain) {
+                for (i in 1:n.chains) {
                     init.values[[i]] <- inits
                 }
             }
             else {
-                if (length(inits) != nchain) {
+                if (length(inits) != n.chains) {
                     stop("Length mismatch in inits")
                 }
                 init.values <- inits
             }
         }
             
-        for (i in 1:nchain) {
+        for (i in 1:n.chains) {
             if (!checkParameters(init.values[[i]])) {
                 stop("Invalid parameters for chain ", i)
             }
@@ -148,7 +154,7 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                   "state" = function(internal=FALSE)
                   {
                       if(!internal) {
-                          for(i in 1:nchain) {
+                          for(i in 1:n.chains) {
                               model.state[[i]][[".RNG.state"]] <- NULL
                               model.state[[i]][[".RNG.name"]] <- NULL
                           }
@@ -163,15 +169,15 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                   {
                       .Call("get_iter", p, PACKAGE="rjags")
                   },
-                  "update" = function(niter, by=niter/50, adapt=FALSE) {
+                  "update" = function(n.iter, by=n.iter/50, adapt=FALSE) {
 
                     adapting <- .Call("is_adapting", p, PACKAGE="rjags")
                     if (adapt & !adapting)
                       return(invisible(NULL))
 
-                    if (niter <= 0)
-                      stop("niter must be positive")
-                    niter <- floor(niter)
+                    if (n.iter <= 0)
+                      stop("n.iter must be positive")
+                    n.iter <- floor(n.iter)
 
                     if (by <= 0)
                       stop("by must be positive")
@@ -179,20 +185,20 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
 
                     if (interactive()) {
                       #Show progress bar
-                      pb <- txtProgressBar(0, niter, style=3,width=50,
+                      pb <- txtProgressBar(0, n.iter, style=3,width=50,
                                            char=ifelse(adapting,"+","*"))
-                      n <- niter
+                      n <- n.iter
                       while (n > 0) {
                         .Call("update", p, min(n,by), adapt, PACKAGE="rjags")
                         n <- n - by
-                        setTxtProgressBar(pb, niter - n)
+                        setTxtProgressBar(pb, n.iter - n)
                         model.state <<- .Call("get_state", p, PACKAGE="rjags")
                       }
                       close(pb)
                     }
                     else {
                       #Suppress progress bar
-                      .Call("update", p, niter, adapt, PACKAGE="rjags")
+                      .Call("update", p, n.iter, adapt, PACKAGE="rjags")
                       model.state <<- .Call("get_state", p, PACKAGE="rjags")
                     }
                     
@@ -214,13 +220,13 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                       .Call("check_model", p, mf, PACKAGE="rjags")
                       unlink(mf)
                       ## Re-compile
-                      .Call("compile", p, data, nchain, FALSE, PACKAGE="rjags")
+                      .Call("compile", p, data, n.chains, FALSE, PACKAGE="rjags")
                       ## Re-initialize
                       if (!is.null(model.state)) {
-                          if (length(model.state) != nchain) {
+                          if (length(model.state) != n.chains) {
                               stop("Incorrect number of chains in saved state")
                           }
-                          for (i in 1:nchain) {
+                          for (i in 1:n.chains) {
                               statei <- model.state[[i]]
                               rng <- statei[[".RNG.name"]]
                               if (!is.null(rng)) {
