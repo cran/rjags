@@ -471,11 +471,11 @@ extern "C" {
 	    error("names must be a character vector");
 	}
 
-	unsigned int n = length(names);
+	int n = length(names);
 	if (length(lower) != n || length(upper) != n) {
 	    error("length of names must match length of lower and upper");
 	}
-	unsigned int i;
+	int i;
 	for (i = 0; i < n; ++i) {
 	    Range range = makeRange(VECTOR_ELT(lower, i), VECTOR_ELT(upper, i));
 	    bool status = ptrArg(ptr)->setMonitor(stringArg(names,i), range, 
