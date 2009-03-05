@@ -26,4 +26,9 @@
     
     library.dynam("rjags", pkg, lib, local=FALSE)
     .Call("init_jags_console", PACKAGE="rjags")
+
+    ## Set progress bar type
+    if (is.null(getOption("jags.pb"))) {
+        options("jags.pb"="text")
+    }
 }
