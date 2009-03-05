@@ -51,11 +51,8 @@
     names (\code{.RNG.name}) and states (\code{.RNG.state}).  This is
     not the user-level interface: use the \code{\link{coef.jags}} method
     instead.}
-  \item{update(n.iter, by = n.iter/50, adapt=FALSE)}{Updates the model by
-    \code{n.iter} iterations. By default a progress bar is printed to the
-    screen, with an update every \code{by} iterations. To suppress the
-    update bar, use \code{by=0}. The \code{adapt} argument is used for
-    adaptive mode.  This is not the user-level interface: use the
+  \item{update(n.iter)}{Updates the model by \code{n.iter} iterations.
+    This is not the user-level interface: use the
     \code{\link{update.jags}} method instead.}
   
 }

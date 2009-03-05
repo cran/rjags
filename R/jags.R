@@ -169,46 +169,9 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                   {
                       .Call("get_iter", p, PACKAGE="rjags")
                   },
-                  "update" = function(n.iter, by=n.iter/50, adapt=FALSE) {
-
-                    adapting <- .Call("is_adapting", p, PACKAGE="rjags")
-                    if (adapt & !adapting)
-                      return(invisible(NULL))
-
-                    if (n.iter <= 0)
-                      stop("n.iter must be positive")
-                    n.iter <- floor(n.iter)
-
-                    if (by <= 0)
-                      stop("by must be positive")
-                    by <- ceiling(by)
-
-                    if (interactive()) {
-                      #Show progress bar
-                      pb <- txtProgressBar(0, n.iter, style=3,width=50,
-                                           char=ifelse(adapting,"+","*"))
-                      n <- n.iter
-                      while (n > 0) {
-                        .Call("update", p, min(n,by), adapt, PACKAGE="rjags")
-                        n <- n - by
-                        setTxtProgressBar(pb, n.iter - n)
-                        model.state <<- .Call("get_state", p, PACKAGE="rjags")
-                      }
-                      close(pb)
-                    }
-                    else {
-                      #Suppress progress bar
-                      .Call("update", p, n.iter, adapt, PACKAGE="rjags")
+                  "sync" = function() {
+                      
                       model.state <<- .Call("get_state", p, PACKAGE="rjags")
-                    }
-                    
-                    if (adapting) {
-                      if (!.Call("adapt_off", p, PACKAGE="rjags")) {
-                        warning("Adaptation incomplete");
-                      }
-                    }
-                    
-                    invisible(NULL)
                   },
                   "recompile" = function() {
                       ## Clear the console
@@ -237,14 +200,23 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                           }
                           .Call("initialize", p, PACKAGE="rjags")
                           ## Redo adaptation
-                          cat("Adapting\n")
-                          .Call("update", p, n.adapt, TRUE, PACKAGE="rjags")
+                          if(.Call("is_adapting", p, PACKAGE="rjags")) {
+                              cat("Adapting\n")
+                              .Call("update", p, n.adapt, PACKAGE="rjags")
+                              if (!.Call("adapt_off", p, PACKAGE="rjags")) {
+                                  warning("Adaptation incomplete");
+                              }
+                          }
                           model.state <<- .Call("get_state", p, PACKAGE="rjags")
                       }
                       invisible(NULL)
                   })
     class(model) <- "jags"
-    model$update(n.adapt, adapt=TRUE)
+
+    adapting <- .Call("is_adapting", p, PACKAGE="rjags")
+    if (adapting) {
+       update(model, n.adapt)
+    }
     return(model)
 }
 
