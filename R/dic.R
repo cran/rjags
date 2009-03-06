@@ -21,7 +21,7 @@
     .Call("set_default_monitors", model$ptr(), as.integer(thin),
           type, PACKAGE="rjags")
 
-    model$update(as.integer(n.iter))
+    update(model, as.integer(n.iter))
     dev <- .Call("get_monitored_values", model$ptr(), "deviance",
                  PACKAGE="rjags")
     for (i in seq(along=dev)) {
