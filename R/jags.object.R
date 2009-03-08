@@ -16,10 +16,9 @@ update.jags <- function(object, n.iter = 1, by, progress.bar, ...)
     else {
         ## New jags.model object (in version 1.0.3-6)
 
+        adapting <- .Call("is_adapting", object$ptr(), PACKAGE="rjags") 
         on.exit(object$sync())
-    
-        adapting <- .Call("is_adapting", object$ptr(), PACKAGE="rjags")
-
+        
         if (missing(progress.bar)) {
             progress.bar <- getOption("jags.pb")
         }
@@ -62,18 +61,22 @@ update.jags <- function(object, n.iter = 1, by, progress.bar, ...)
         if (do.pb) {
             close(pb)
         }
-
-        ## End adaptive phase at the end of first call to update
-        if (adapting) {
-            if (!.Call("adapt_off", object$ptr(), PACKAGE="rjags")) {
-                warning("Adaptation incomplete");
-            }
-        }
     }
 
     invisible(NULL)
 }
-    
+
+adapt <- function(object, n.iter, ...)
+{
+    if(.Call("is_adapting", object$ptr(), PACKAGE="rjags")) {
+        update(object, n.iter, ...)
+        if (!.Call("adapt_off", object$ptr(), PACKAGE="rjags")) {
+            warning("Adaptation incomplete. Recreate the model with a longer adaptive phase.")
+        }
+    }
+    invisible(NULL)
+}
+                  
 coef.jags <- function(object, chain = 1, ...) {
     if (!is.numeric(chain) || chain < 1 || chain > object$nchain()) {
         stop("Invalid chain")

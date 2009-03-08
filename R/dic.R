@@ -1,5 +1,5 @@
 "dic.samples" <-
-  function(model, n.iter, thin=1, type)
+  function(model, n.iter, thin=1, type, ...)
 {
     if (nchain(model) == 1) {
         stop("Estimation of the deviance penalty requires 2 or more parallel chains")
@@ -21,7 +21,7 @@
     .Call("set_default_monitors", model$ptr(), as.integer(thin),
           type, PACKAGE="rjags")
 
-    update(model, as.integer(n.iter))
+    update(model, n.iter = as.integer(n.iter), ...)
     dev <- .Call("get_monitored_values", model$ptr(), "deviance",
                  PACKAGE="rjags")
     for (i in seq(along=dev)) {

@@ -7,7 +7,7 @@
   output to a single \code{mcmc.list} object.
 }
 \usage{
-coda.samples(model, variable.names, n.iter, thin = 1)
+coda.samples(model, variable.names, n.iter, thin = 1, ...)
 }
 \arguments{
   \item{model}{a jags model object}
@@ -15,6 +15,8 @@ coda.samples(model, variable.names, n.iter, thin = 1)
     to be monitored}
   \item{n.iter}{number of iterations to monitor}
   \item{thin}{thinning interval for monitors}
+  \item{...}{optional arguments that are passed to the update method
+             for jags model objects}
 }
 \value{
   An \code{mcmc.list} object.

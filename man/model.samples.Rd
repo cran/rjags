@@ -7,7 +7,7 @@
   of the parameters of a \code{jags} model. 
 }
 \usage{
-jags.samples(model, variable.names, n.iter, thin = 1, type="trace")
+jags.samples(model, variable.names, n.iter, thin = 1, type="trace", ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,6 +17,8 @@ jags.samples(model, variable.names, n.iter, thin = 1, type="trace")
   \item{n.iter}{number of iterations to monitor}
   \item{thin}{thinning interval for monitors}
   \item{type}{type of monitor}
+  \item{...}{optional arguments passed to the update method for jags
+             model objects}
 }
 \details{
   The \code{jags.samples} function creates monitors for the given
