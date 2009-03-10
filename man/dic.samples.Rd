@@ -9,7 +9,7 @@
   a \code{jags} model.
 }
 \usage{
-dic.samples(model, n.iter, thin = 1, type)
+dic.samples(model, n.iter, thin = 1, type, ...)
 \method{as.mcmc}{dic}(x)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -19,6 +19,8 @@ dic.samples(model, n.iter, thin = 1, type)
   \item{thin}{thinning interval for monitors}
   \item{type}{type of penalty to use}
   \item{x}{An object inheriting from class ``dic''}
+  \item{...}{optional arguments passed to the update method for jags
+             model objects}
 }
 \details{
 

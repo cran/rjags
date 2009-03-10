@@ -200,7 +200,8 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                           }
                           .Call("initialize", p, PACKAGE="rjags")
                           ## Redo adaptation
-                          if(.Call("is_adapting", p, PACKAGE="rjags")) {
+                          adapting <- .Call("is_adapting", p, PACKAGE="rjags")
+                          if(n.adapt > 0 && adapting) {
                               cat("Adapting\n")
                               .Call("update", p, n.adapt, PACKAGE="rjags")
                               if (!.Call("adapt_off", p, PACKAGE="rjags")) {
@@ -213,9 +214,8 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                   })
     class(model) <- "jags"
 
-    adapting <- .Call("is_adapting", p, PACKAGE="rjags")
-    if (adapting) {
-       update(model, n.adapt)
+    if (n.adapt > 0) {
+        adapt(model, n.adapt)
     }
     return(model)
 }
@@ -288,7 +288,7 @@ parse.varnames <- function(varnames)
 
 
 jags.samples <-
-  function(model, variable.names=NULL, n.iter, thin=1, type="trace")
+  function(model, variable.names=NULL, n.iter, thin=1, type="trace", ...)
 {
     if (class(model) != "jags")
       stop("Invalid JAGS model")
@@ -312,7 +312,7 @@ jags.samples <-
       .Call("set_monitors", model$ptr(), pn$names, pn$lower, pn$upper,
             as.integer(thin), type, PACKAGE="rjags")
     }
-    update(model, n.iter)
+    update(model, n.iter, ...)
     ans <- .Call("get_monitored_values", model$ptr(), type, PACKAGE="rjags")
     for (i in seq(along=ans)) {
         class(ans[[i]]) <- "mcarray"
@@ -385,10 +385,10 @@ nchain <- function(model)
     .Call("get_nchain", model$ptr(), PACKAGE="rjags")
 }
 
-coda.samples <- function(model, variable.names=NULL, n.iter, thin=1)
+coda.samples <- function(model, variable.names=NULL, n.iter, thin=1, ...)
 {
     start <- model$iter() + thin
-    out <- jags.samples(model, variable.names, n.iter, thin, type="trace")
+    out <- jags.samples(model, variable.names, n.iter, thin, type="trace", ...)
 
     ans <- vector("list", nchain(model))
     for (ch in 1:nchain(model)) {

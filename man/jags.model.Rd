@@ -21,10 +21,9 @@
     initial values will be generated automatically.  It is an error to
     supply an initial value for an observed node.}
   \item{n.chains}{the number of parallel chains for the model}
-  \item{n.adapt}{the number of iterations for adaptation.  When a model
-    is first created, some of the samplers may have an adaptive mode. In
-    this case, the samplers are run for \code{n.adapt} iterations and then
-    the adaptive mode is switched off}
+  \item{n.adapt}{the number of iterations for adaptation. See 
+    \code{\link{adapt}} for details. If \code{n.adapt = 0} then no 
+    adaptation takes place.}
   \item{nchain}{deprecated argument for the number of parallel chains.  Use 
     \code{n.chain} instead. If both \code{n.chain} and \code{nchain} are
     supplied then the value of \code{nchain} is ignored}
