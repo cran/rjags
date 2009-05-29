@@ -62,7 +62,7 @@
   details. Otherwise, the options are as follows:
   \enumerate{
     \item A list of numeric values. Initial values for a single chain
-    may supplied as a named list of numeric values. If there are multiple
+    may be supplied as a named list of numeric values. If there are multiple
     parallel chains then the same list is re-used for each chain.
     
     \item A list of lists. Distinct initial values for each chain may be

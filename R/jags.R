@@ -329,12 +329,12 @@ jags.samples <-
     return(ans)
 }
 
-list.samplers <- function(model)
+list.samplers <- function(object)
 {
-    if (!inherits(model, "jags")) {
+    if (!inherits(object, "jags")) {
         stop("not a jags model object")
     }
-    .Call("get_samplers", model$ptr(), PACKAGE="rjags")
+    .Call("get_samplers", object$ptr(), PACKAGE="rjags")
 }
 
 
