@@ -14,7 +14,9 @@ export (
   jags.module,
   dic.samples,
   diffdic,
-  adapt
+  adapt,
+  list.samplers,
+  read.data
 )
 S3method(print, jags)
 S3method(coef, jags)
