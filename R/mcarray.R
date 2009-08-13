@@ -56,7 +56,7 @@ as.mcmc.list.mcarray <- function(x, ...)
     niter <- xdim[which.iter]
     if (length(which.chain) == 0) {
         perm <- c((1:ndim)[-which.iter], which.iter)
-        x <- matrix(aperm(x, perm), nrow=niter)
+        x <- matrix(aperm(x, perm), nrow=niter, byrow=TRUE)
         ans <- mcmc.list(mcmc(x))
     }
     else {
@@ -66,7 +66,8 @@ as.mcmc.list.mcarray <- function(x, ...)
         perm <- c((1:ndim)[-c(which.iter,which.chain)], which.iter, which.chain)
         x <- aperm(x,perm)
         for (i in 1:nchain) {
-            ans <- mcmc(matrix(x[1:len + (i-1)*len], nrow=niter))
+            ans[[i]] <- mcmc(matrix(x[1:len + (i-1)*len], nrow=niter,
+                                    byrow=TRUE))
         }
         ans <- mcmc.list(ans)
     }

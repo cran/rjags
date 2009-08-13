@@ -1,13 +1,16 @@
 .onLoad <- function(lib, pkg)
 {
-    ## FIXME - We should user SOFTWARE\JAGS\version in future
-    regkey <- try(readRegistry("SOFTWARE\\JAGS-1.0.3", 
-                  hive = "HLM", maxdepth = 1), silent = TRUE)
-    if (inherits(regkey, "try-error"))
-        stop("Failed to locate JAGS 1.0.3 installation")
-    jags.home <- regkey[["Install_Dir"]]
-
-    ## Add jags.home to the windows PATH, if not already present
+    jags.home <- Sys.getenv("JAGS_HOME")
+    if (nchar(jags.home)==0) {
+        ## FIXME - We should user SOFTWARE\JAGS\version in future
+        regkey <- try(readRegistry("SOFTWARE\\JAGS-1.0.3", 
+                                   hive = "HLM", maxdepth = 1), silent = TRUE)
+        if (inherits(regkey, "try-error"))
+            stop("Failed to locate JAGS 1.0.3 installation")
+        jags.home <- regkey[["Install_Dir"]]
+    }
+    
+    ## Add jags.home/bin to the windows PATH, if not already present
 
     bindir <- file.path(jags.home, "bin")
     path <- Sys.getenv("PATH")
