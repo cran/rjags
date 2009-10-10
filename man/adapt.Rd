@@ -1,4 +1,4 @@
-\name{update}
+\name{adapt}
 \alias{adapt}
 \title{Adaptive phase for JAGS models}
 \description{
