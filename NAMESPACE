@@ -1,9 +1,6 @@
 if(tools:::.OStype() == "windows") {
 importFrom(utils, readRegistry, winProgressBar, setWinProgressBar)
 }
-if(tools:::.OStype() == "unix") {
-importFrom(tcltk, tkProgressBar, setTkProgressBar)
-}
 importFrom(utils, txtProgressBar, setTxtProgressBar)
 importFrom(stats, variable.names, sd, update)
 importFrom(coda, as.mcmc.list, as.mcmc, spectrum0)
