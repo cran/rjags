@@ -58,8 +58,12 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
             stop("Duplicated names in data list: ",
                  paste(v[duplicated(v)], collapse=" "))
         }
-        relevant.variables <- names(data) %in% varnames
+        relevant.variables <- v %in% varnames
         data <- data[relevant.variables]
+        unused.variables <- setdiff(v, varnames)
+        for (i in seq(along=unused.variables)) {
+            warning("Unused variable \"", unused.variables[i], "\" in data")
+        }
     }
     else {
         stop("data must be a list or environment")
