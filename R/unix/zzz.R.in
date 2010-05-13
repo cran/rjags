@@ -8,7 +8,8 @@
   if (is.null(getOption("jags.moddir"))) {
       options("jags.moddir" = moddir)
   }
-  jags.module(c("basemod","bugs"))
+  load.module("basemod")
+  load.module("bugs")
 
   .Call("init_jags_console", PACKAGE="rjags")
 

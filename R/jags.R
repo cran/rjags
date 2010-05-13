@@ -151,7 +151,7 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
 
     model.state <- .Call("get_state", p, PACKAGE="rjags")
     model.data <- .Call("get_data", p, PACKAGE="rjags")
-    model.code <- readLines(file)
+    model.code <- readLines(file, warn=FALSE)
     model <- list("ptr" = function() {p},
                   "data" = function() {model.data},
                   "model" = function() {model.code},
@@ -292,43 +292,30 @@ parse.varnames <- function(varnames)
 
 
 jags.samples <-
-  function(model, variable.names=NULL, n.iter, thin=1, type="trace", ...)
+  function(model, variable.names, n.iter, thin=1, type="trace", ...)
 {
     if (class(model) != "jags")
       stop("Invalid JAGS model")
 
-    if (!is.null(variable.names)) {
-       if (!is.character(variable.names))
-         stop("variable.names must be a character vector")
-    }
+    if (!is.character(variable.names) || length(variable.names) == 0)
+      stop("variable.names must be a character vector")
      
     if (!is.numeric(n.iter) || length(n.iter) != 1 || n.iter <= 0)
       stop("n.iter must be a positive integer")
     if (!is.character(type))
       stop("type must be a character vector")
 
-    if (is.null(variable.names)) {
-        .Call("set_default_monitors", model$ptr(), as.integer(thin),
-              type, PACKAGE="rjags")
-    }
-    else {
-      pn <- parse.varnames(variable.names)
-      .Call("set_monitors", model$ptr(), pn$names, pn$lower, pn$upper,
-            as.integer(thin), type, PACKAGE="rjags")
-    }
+    pn <- parse.varnames(variable.names)
+    .Call("set_monitors", model$ptr(), pn$names, pn$lower, pn$upper,
+          as.integer(thin), type, PACKAGE="rjags")
     update(model, n.iter, ...)
     ans <- .Call("get_monitored_values", model$ptr(), type, PACKAGE="rjags")
     for (i in seq(along=ans)) {
         class(ans[[i]]) <- "mcarray"
     }
-    if (is.null(variable.names)) {
-        .Call("clear_default_monitors", model$ptr(), type, PACKAGE="rjags")
-    }
-    else {
-        for (i in seq(along=variable.names)) {
-            .Call("clear_monitor", model$ptr(), pn$names[i], pn$lower[[i]],
-                  pn$upper[[i]], type, PACKAGE="rjags")
-        }
+    for (i in seq(along=variable.names)) {
+      .Call("clear_monitor", model$ptr(), pn$names[i], pn$lower[[i]],
+            pn$upper[[i]], type, PACKAGE="rjags")
     }
     return(ans)
 }
@@ -341,6 +328,24 @@ list.samplers <- function(object)
     .Call("get_samplers", object$ptr(), PACKAGE="rjags")
 }
 
+list.factories <- function(type)
+{
+    type = match.arg(type, c("sampler","monitor","rng"))
+    as.data.frame(.Call("get_factories", type, PACKAGE="rjags"))
+}
+
+set.factory <- function(name, type, state)
+{
+    if (!is.character(name) || length(name) != 1)
+        stop("invalid name")
+    if (!is.character(type) || length(type) != 1)
+        stop("invalid name")
+    if (length(state) != 1)
+        stop("invalid state")
+    
+    type <- match.arg(type, c("sampler","rng","monitor"))
+    .Call("set_factory_active", name, type, as.logical(state), PACKAGE="rjags")
+}
 
 coda.names <- function(basename, dim)
 {
@@ -427,7 +432,7 @@ coda.samples <- function(model, variable.names=NULL, n.iter, thin=1, ...)
     mcmc.list(ans)
 }
 
-jags.module <- function(names, path)
+load.module <- function(name, path, quiet=FALSE)
 {
     if (missing(path)) {
         path = getOption("jags.moddir")
@@ -435,16 +440,58 @@ jags.module <- function(names, path)
             stop("option jags.moddir is not set")
         }
     }
-    
-    cat("loading JAGS module\n")
-    for (i in 1:length(names)) {
-        cat("   ", names[i], "\n", sep="")
-        file <- file.path(path,
-                          paste(names[i], .Platform$dynlib.ext, sep=""))
-        if (!file.exists(file)) {
-            stop("Cannot load ", file)
-        }
+    if (!is.character(path) || length(path) != 1)
+        stop("invalid path")
+    if (!is.character(name) || length(name) != 1)
+        stop("invalid name")
+
+    file <- file.path(path, paste(name, .Platform$dynlib.ext, sep=""))
+    if (!file.exists(file)) {
+        stop("File not found: ", file)
+    }
+    if (!isModuleLoaded(file)) {
+        ## We must avoid calling dyn.load twice on the same DLL This
+        ## may result in the DLL being unloaded and then reloaded,
+        ## which will invalidate pointers to the distributions,
+        ## functions and factories in the module.
         dyn.load(file)
     }
+    ok <- .Call("load_module", name, PACKAGE="rjags")
+    if (!ok) {
+        stop("module", name, "not found\n", sep=" ")
+    }
+    else if (!quiet) {
+        cat("module", name, "loaded\n", sep=" ")
+    }
+    invisible()
 }
 
+unload.module <- function(name, quiet=FALSE)
+{
+    if (!is.character(name) || length(name) != 1)
+        stop("invalid name")
+
+    ok <- .Call("unload_module", name, PACKAGE="rjags")
+    if (!ok) {
+        warning("module", name, "not loaded", sep=" ")
+    }
+    else if (!quiet) {
+        cat("Module", name, "unloaded\n", sep=" ")
+    }
+    invisible()
+}
+
+list.modules <- function()
+{
+    .Call("get_modules", PACKAGE="rjags");
+}
+
+isModuleLoaded <- function(file)
+{
+    dll.list <- getLoadedDLLs()
+    for (i in seq(along=dll.list)) {
+        if (dll.list[[i]]["path"][1] == file)
+            return(TRUE)
+    }
+    return(FALSE)
+}
