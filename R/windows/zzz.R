@@ -1,16 +1,31 @@
 .onLoad <- function(lib, pkg)
 {
+### First task is to get installation directory of JAGS
+
+    ## Try environment variable first
     jags.home <- Sys.getenv("JAGS_HOME")
     if (nchar(jags.home)==0) {
-        ## FIXME - We should user SOFTWARE\JAGS\version in future
-        regkey <- try(readRegistry("SOFTWARE\\JAGS-1.0.3", 
-                                   hive = "HLM", maxdepth = 1), silent = TRUE)
-        if (inherits(regkey, "try-error"))
-            stop("Failed to locate JAGS 1.0.3 installation")
-        jags.home <- regkey[["Install_Dir"]]
+        keyname <- "SOFTWARE\\JAGS\\JAGS-2.1.0"
+        if (identical(.Platform$r_arch, "x64")) {
+            keyname <- paste(keyname,"-x64", sep="")
+        }
+        ## Look for multi-user installation in registry
+        regkey <- try(readRegistry(keyname, hive = "HLM", maxdepth = 1),
+                      silent = TRUE)
+        if (inherits(regkey, "try-error")) {
+            ## Look for single-user installation in registry
+            regkey <- try(readRegistry(keyname, hive = "HCU", maxdepth = 1),
+                          silent = TRUE)
+        }
+        if (inherits(regkey, "try-error") || is.null(regkey[["InstallDir"]])) {
+            ## Give up
+            stop("Failed to locate JAGS 2.1.0 installation.")
+        }
+        jags.home <- regkey[["InstallDir"]]
     }
+
     
-    ## Add jags.home/bin to the windows PATH, if not already present
+### Add jags.home to the windows PATH, if not already present
 
     bindir <- file.path(jags.home, "bin")
     path <- Sys.getenv("PATH")
@@ -20,17 +35,19 @@
         Sys.setenv("PATH"=path)
     }
     
-    ## Set the module directory, if the option jags.moddir is not already set
+### Set the module directory, if the option jags.moddir is not already set
     
     if (is.null(getOption("jags.moddir"))) {
         options("jags.moddir" = file.path(jags.home, "modules"))
     }
-    jags.module(c("basemod","bugs"))
-    
     library.dynam("rjags", pkg, lib, local=FALSE)
+    load.module("basemod")
+    load.module("bugs")
+    
     .Call("init_jags_console", PACKAGE="rjags")
 
-    ## Set progress bar type
+### Set progress bar type
+    
     if (is.null(getOption("jags.pb"))) {
         options("jags.pb"="text")
     }

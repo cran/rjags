@@ -1,18 +1,24 @@
 \name{jags.module}
-\alias{jags.module}
+\alias{load.module}
+\alias{unload.module}
+\alias{list.modules}
 \title{Dynamically load JAGS modules}
 \description{
-  
-  A JAGS module is a shared library that extends the functionality of
-  JAGS.  This function loads a vector named modules.
+  A JAGS module is a dynamically loaded library that extends the
+  functionality of JAGS. These functions load and unload JAGS modules
+  and show the names of the currently loaded modules.
 }
 \usage{
-jags.module(names, path)
+load.module(name, path, quiet=FALSE)
+unload.module(name, quiet=FALSE)
+list.modules()
 }
 \arguments{
-  \item{names}{a vector of names of the jags modules to be loaded}
-  \item{path}{the file path to the location of the modules. If omitted,
+  \item{name}{name of the load module to be loaded}
+  \item{path}{file path to the location of the DLL. If omitted,
     the option \code{jags.moddir} is used to locate the modules}
+  \item{quiet}{a logical. If \code{TRUE}, no message will be printed
+    about loading the package}
 }
 \author{Martyn Plummer}
 \keyword{interface}

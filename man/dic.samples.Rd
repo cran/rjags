@@ -1,7 +1,6 @@
 \name{dic.samples}
 \alias{dic}
 \alias{dic.samples}
-\alias{as.mcmc.dic}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Generate penalized deviance samples}
 \description{
@@ -10,7 +9,6 @@
 }
 \usage{
 dic.samples(model, n.iter, thin = 1, type, ...)
-\method{as.mcmc}{dic}(x)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -18,7 +16,6 @@ dic.samples(model, n.iter, thin = 1, type, ...)
   \item{n.iter}{number of iterations to monitor}
   \item{thin}{thinning interval for monitors}
   \item{type}{type of penalty to use}
-  \item{x}{An object inheriting from class ``dic''}
   \item{...}{optional arguments passed to the update method for jags
              model objects}
 }
@@ -59,17 +56,10 @@ dic.samples(model, n.iter, thin = 1, type, ...)
     function}
   \item{type}{A string identifying the type of penalty: ``pD'' or
     ``popt''}
-
-  An object of class \code{dic} can be coerced to an \code{mcmc} object
-  using the \code{as.mcmc} generic function. The resulting \code{mcmc}
-  object has two variables: the mean deviance over all chains and
-  the penalty.
 }
 \note{
   The \code{popt} penalty is estimated by importance weighting, and may
-  be numerically unstable.  It is recommended to inspect the \code{dic}
-  object after coercing it to a \code{mcmc} object using functions from
-  the \code{coda} package.
+  be numerically unstable.  
 }  
 \author{Martyn Plummer}
 \references{

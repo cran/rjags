@@ -8,6 +8,8 @@
 #include <Console.h>
 #include <util/nainf.h>
 
+#include <R.h>
+
 using std::string;
 using std::map;
 using std::pair;
@@ -37,7 +39,7 @@ static SEXP JAGS_console_tag; //Run-time type checking for external pointer
 
 static void checkConsole (SEXP s)
 {				  
-  if (TYPEOF(s) != EXTPTRSXP || R_ExternalPtrTag(s) != JAGS_console_tag)
+    if (TYPEOF(s) != EXTPTRSXP || R_ExternalPtrTag(s) != JAGS_console_tag)
     {
         error("bad JAGS console pointer");
     }
@@ -200,7 +202,7 @@ static Range makeRange(SEXP lower, SEXP upper)
 }
 
 #include <iostream>
-/* Read data from a JAGS data table into and R list */
+/* Read data from a JAGS data table into an R list */
 static SEXP readDataTable(map<string,SArray> const &table)
 {
     int N = table.size();
@@ -249,15 +251,54 @@ static SEXP readDataTable(map<string,SArray> const &table)
 		    SET_STRING_ELT(dimnames, k, mkChar(names[k].c_str()));
 		}
 		setAttrib(dim, R_NamesSymbol, dimnames);
-	        SET_DIM(e, dim);
-		UNPROTECT(2); //dimnames, dim
+		UNPROTECT(1); //dimnames
 	    }
-            else {
-	        SET_DIM(e, dim);
-	        UNPROTECT(1); //dim
-            }
+	    SET_DIM(e, dim);
+	    UNPROTECT(1); //dim
+
+	    //Set S dimnames
+	    bool set_s_dimnames = false;
+	    for (unsigned int k = 0; k < ndim; ++k) {
+		if (!p->second.getSDimNames(k).empty()) {
+		    set_s_dimnames = true;
+		    break;
+		}
+	    }
+	    if (set_s_dimnames) {
+		SEXP sdimnames;
+		PROTECT(sdimnames = allocVector(VECSXP, ndim));
+		for (unsigned int k = 0; k < ndim; ++k) {
+		    vector<string> const &names_k = p->second.getSDimNames(k);
+		    if (names_k.empty()) {
+			SET_VECTOR_ELT(sdimnames, k, R_NilValue);
+		    }
+		    else {
+			SEXP snames_k;
+			PROTECT(snames_k = allocVector(STRSXP, names_k.size()));
+			for (unsigned int l = 0; l < names_k.size(); ++l) {
+			    SET_STRING_ELT(sdimnames, l, 
+					   mkChar(names_k[l].c_str()));
+			}
+			UNPROTECT(1); //snames_k
+		    }
+		}
+		setAttrib(e, R_DimNamesSymbol, sdimnames);
+		UNPROTECT(1); //sdimnames
+	    }
 	}
-    
+	else if (!p->second.getSDimNames(0).empty()) {
+
+	    //Set names attribute
+	    SEXP snames;
+	    vector<string> const &names = p->second.getSDimNames(0);
+	    PROTECT(snames = allocVector(STRSXP, names.size()));
+	    for (unsigned int l = 0; l < names.size(); ++l) {
+		SET_STRING_ELT(snames, l,  mkChar(names[l].c_str()));
+	    }
+	    setAttrib(e, R_NamesSymbol, snames);
+	    UNPROTECT(1); //snames
+	}
+	    
 	SET_ELEMENT(data, i, e);
 	UNPROTECT(1); //e
     }
@@ -271,6 +312,25 @@ static SEXP readDataTable(map<string,SArray> const &table)
     setAttrib(data, R_NamesSymbol, names);
     UNPROTECT(2); //names, data
     return data;
+}
+
+static FactoryType asFactoryType(SEXP type)
+{
+    string ft = stringArg(type);
+    FactoryType ans;
+    if (ft == "sampler") {
+	ans = SAMPLER_FACTORY;
+    }
+    else if (ft == "rng") {
+	ans = RNG_FACTORY;
+    }
+    else if (ft == "monitor") {
+	ans = MONITOR_FACTORY;
+    }
+    else {
+	error("Invalid factory type");
+    }
+    return ans;
 }
 
 extern "C" {
@@ -308,7 +368,8 @@ extern "C" {
     {
 	/* Name should be a name of a file containing the model */
     
-	string sname = stringArg(name);
+	string sname = R_ExpandFileName(stringArg(name));
+
 	FILE *file = fopen(sname.c_str(), "r");
 	if (!file) {
 	    jags_err << "Failed to open file " << sname << "\n";
@@ -409,25 +470,19 @@ extern "C" {
 	}
 	if (i < n) {
 	    //Failure to set monitor i: unwind the others
-	    Range range = makeRange(VECTOR_ELT(lower, i), VECTOR_ELT(upper, i));
-	    for (unsigned int j = i; j > 0; --j) {
-		ptrArg(ptr)->clearMonitor(stringArg(names, j - 1), range,
+	    for (int j = i - 1; j > 0; --j) {
+		Range range = makeRange(VECTOR_ELT(lower, j), 
+					VECTOR_ELT(upper, j));
+		ptrArg(ptr)->clearMonitor(stringArg(names, j), range,
 					  stringArg(type));
 	    }
 	    printMessages(false);
+	    return ScalarLogical(FALSE);
 	}
 	else {
 	    printMessages(true);
+	    return ScalarLogical(TRUE);
 	}
-	return R_NilValue;
-    }
-
-    SEXP set_default_monitors(SEXP ptr, SEXP thin, SEXP type)
-    {
-	bool status = ptrArg(ptr)->setDefaultMonitors(stringArg(type),
-						      intArg(thin));
-	printMessages(status);
-	return R_NilValue;
     }
 
     SEXP clear_monitor(SEXP ptr, SEXP name, SEXP lower, SEXP upper, SEXP type)
@@ -439,21 +494,21 @@ extern "C" {
 	return R_NilValue;
     }
 
-    SEXP clear_default_monitors(SEXP ptr, SEXP type)
-    {
-	bool status = ptrArg(ptr)->clearDefaultMonitors(stringArg(type));
-	printMessages(status);
-	return R_NilValue;
-    }
-
     SEXP get_monitored_values(SEXP ptr, SEXP type)
     {
 	map<string,SArray> data_table;
-        //This is only included for compatibility with previous versions
-        //of the JAGS library. 
-        map<string, unsigned int> weight_table;
-	bool status = ptrArg(ptr)->dumpMonitors(data_table, weight_table,
-                                                stringArg(type));
+	bool status = ptrArg(ptr)->dumpMonitors(data_table, stringArg(type),
+						false);
+	printMessages(status);
+	return readDataTable(data_table);
+    }
+
+    //FIXME: lazy cut-and-paste here
+    SEXP get_monitored_values_flat(SEXP ptr, SEXP type)
+    {
+	map<string,SArray> data_table;
+	bool status = ptrArg(ptr)->dumpMonitors(data_table, stringArg(type),
+						true);
 	printMessages(status);
 	return readDataTable(data_table);
     }
@@ -551,7 +606,45 @@ extern "C" {
 	UNPROTECT(2); //names, ans
 	return node_list;
     }
-    
+
+    SEXP get_factories(SEXP type)
+    {
+	FactoryType ft = asFactoryType(type);
+	vector<pair<string, bool> > factories = Console::listFactories(ft);
+	    
+	unsigned int n = factories.size();
+	SEXP names, status;
+	PROTECT(names = allocVector(STRSXP, n));
+	PROTECT(status = allocVector(LGLSXP, n));
+	for (unsigned int i = 0; i < n; ++i) {
+	    SET_STRING_ELT(names, i, mkChar(factories[i].first.c_str()));
+	    LOGICAL_POINTER(status)[i] = factories[i].second;
+	}
+
+	SEXP fac_list;
+	PROTECT(fac_list = allocVector(VECSXP, 2));
+	SET_ELEMENT(fac_list, 0, names);
+	SET_ELEMENT(fac_list, 1, status);
+	UNPROTECT(2); //names, status
+
+	SEXP fac_names;
+	PROTECT(fac_names = allocVector(STRSXP,2));
+	SET_STRING_ELT(fac_names, 0, mkChar("factory"));
+	SET_STRING_ELT(fac_names, 1, mkChar("status"));
+	setAttrib(fac_list, R_NamesSymbol, fac_names);	
+	UNPROTECT(1); //fac_names
+
+	UNPROTECT(1); //fac_list
+	return fac_list;
+    }
+
+    SEXP set_factory_active(SEXP name, SEXP type, SEXP status)
+    {
+	Console::setFactoryActive(stringArg(name), asFactoryType(type), 
+				  boolArg(status));
+	return R_NilValue;
+    }
+
     SEXP get_iter(SEXP ptr)
     {
 	Console *console = ptrArg(ptr);
@@ -574,5 +667,28 @@ extern "C" {
 	INTEGER(ans)[0] = nchain;
 	UNPROTECT(1);
 	return ans;
+    }
+
+    SEXP load_module(SEXP name)
+    {
+	return ScalarLogical(Console::loadModule(stringArg(name)));
+    }
+
+    SEXP unload_module(SEXP name)
+    {
+	return ScalarLogical(Console::unloadModule(stringArg(name)));
+    }
+
+    SEXP get_modules()
+    {
+	vector<string> modules = Console::listModules();
+	unsigned int n = modules.size();
+	SEXP mod_list;
+	PROTECT(mod_list = allocVector(STRSXP, n));
+	for (unsigned int i = 0; i < n; ++i) {
+	    SET_STRING_ELT(mod_list, i, mkChar(modules[i].c_str()));
+	}
+	UNPROTECT(1); //mod_list
+	return mod_list;
     }
 }
