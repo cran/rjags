@@ -1,0 +1,71 @@
+The rjags package is an interface to the JAGS library.  In order to
+build a binary package, or install from source, you must have a matching
+installation of the JAGS library.
+
+Windows
+-------
+
+There is no way for windows to guess where the JAGS library is installed,
+so you must supply it yourself using the variable JAGS_ROOT.  
+
+You can specify JAGS_ROOT as an environment variable, e.g.  on 32-bit
+windows:
+
+set JAGS_ROOT=c:\Program Files\JAGS\JAGS-2.1.0
+
+or, for 64-bit windows
+
+set JAGS_ROOT=c:\Program Files\JAGS\JAGS-2.1.0-x64
+or
+set JAGS_ROOT=c:\Program Files (x86)\JAGS\JAGS-2.1.0
+
+In R >= 2.12.0 you will be able to set JAGS_ROOT as a (platform-
+specific) make variable in etc${R_ARCH}/Makevars.win.
+
+Unix
+----
+
+The configure script will try to guess the location of the JAGS
+library installation. It will look in /<prefix>/<lib>, where
+
+- <prefix> is the determined from the location of the jags
+  script that launches the command line interface.
+
+  For example, if this is "/usr/local/bin/jags", then prefix will
+  be "/usr/local"
+
+- <lib> is derived from the value of "LIBnn", returned by 
+  "R CMD config LIBnn".
+
+  This is particularly important on 64-bit unix, where R is 
+  installed by default in /usr/local/lib64 and LIBnn is "lib64"
+
+The configure script will also look for JAGS headers in
+/<prefix>/include/JAGS
+
+If the configure script fails to find the JAGS headers or library,
+you can set the environment variables JAGS_INCLUDE and JAGS_LIB
+to point to the correct directory.
+
+Alternatively, you can use the configure options
+
+--with-jags-include=/path/to/jags/headers 
+                    (default /usr/local/include/JAGS)
+
+--with-jags-lib=/path/to/jags/library
+                (default /usr/local/[lib|lib64])
+
+These options are onto the rjags configure script with:
+"R CMD INSTALL --configure-args='--with-jags...'
+
+Exceptionally, you may need to set the location of the JAGS modules.
+But this will only be necessary if you reset moddir when installing
+JAGS. This can be done by setting the environment variabel JAGS_MODULES
+or by using the configure option
+
+--with-jags-modules=/path/to/jags/modules
+                    (default /usr/local/[lib|lib64]/JAGS/modules-w.y.z)
+                     where w.y.z is the version number of JAGS
+
+
+
