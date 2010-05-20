@@ -434,6 +434,13 @@ coda.samples <- function(model, variable.names=NULL, n.iter, thin=1, ...)
 
 load.module <- function(name, path, quiet=FALSE)
 {
+    if (name %in% list.modules()) {
+        ## This is a stop-gap measure as JAGS 2.1.0 does allow you
+        ## to load the same module twice. This should be fixed in
+        ## later versions.
+        return(invisible()) #Module already loaded
+    }
+    
     if (missing(path)) {
         path = getOption("jags.moddir")
         if (is.null(path)) {
@@ -449,7 +456,7 @@ load.module <- function(name, path, quiet=FALSE)
     if (!file.exists(file)) {
         stop("File not found: ", file)
     }
-    if (!isModuleLoaded(file)) {
+    if (!isDLLLoaded(file)) {
         ## We must avoid calling dyn.load twice on the same DLL This
         ## may result in the DLL being unloaded and then reloaded,
         ## which will invalidate pointers to the distributions,
@@ -486,7 +493,7 @@ list.modules <- function()
     .Call("get_modules", PACKAGE="rjags");
 }
 
-isModuleLoaded <- function(file)
+isDLLLoaded <- function(file)
 {
     dll.list <- getLoadedDLLs()
     for (i in seq(along=dll.list)) {
