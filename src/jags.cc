@@ -32,6 +32,7 @@ int min2(int a, int b)
 #include <R.h>
 #include <Rinternals.h>
 #include <Rdefines.h>
+#include <R_ext/Rdynload.h>
 
 std::ostringstream jags_out; //Output stream
 std::ostringstream jags_err; //Error stream
@@ -201,7 +202,6 @@ static Range makeRange(SEXP lower, SEXP upper)
     return r;
 }
 
-#include <iostream>
 /* Read data from a JAGS data table into an R list */
 static SEXP readDataTable(map<string,SArray> const &table)
 {
@@ -335,11 +335,19 @@ static FactoryType asFactoryType(SEXP type)
 
 extern "C" {
     
-    SEXP init_jags_console()
+    void R_init_rjags(DllInfo *info)
     {
-	/* Called by .First.lib */
-	JAGS_console_tag = install("JAGS_CONSOLE_TAG");
-	return R_NilValue;
+	JAGS_console_tag = install("JAGS_CONSOLE_TAG");	
+    }
+
+    void R_unload_rjags(DllInfo *info)
+    {
+	vector<string> loaded_modules = Console::listModules();
+	for (vector<string>::reverse_iterator p = loaded_modules.rbegin();
+	     p != loaded_modules.rend(); ++p)
+	{
+	    Console::unloadModule(*p);
+	}
     }
 
     SEXP clear_console(SEXP s)

@@ -40,15 +40,18 @@
     if (is.null(getOption("jags.moddir"))) {
         options("jags.moddir" = file.path(jags.home, "modules"))
     }
-    library.dynam("rjags", pkg, lib, local=FALSE)
+    library.dynam("rjags", pkg, lib)
     load.module("basemod")
     load.module("bugs")
     
-    .Call("init_jags_console", PACKAGE="rjags")
-
 ### Set progress bar type
     
     if (is.null(getOption("jags.pb"))) {
         options("jags.pb"="text")
     }
+}
+
+.onUnload <- function(libpath)
+{
+    library.dynam.unload("rjags", libpath)
 }
