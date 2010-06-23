@@ -21,13 +21,27 @@ print.jags <- function(x, ...)
 jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                        n.chains = 1, n.adapt=1000, nchain)
 {
-
     if (missing(file)) {
         stop("Model file name missing")
     }
-    if (!file.exists(file)) {
-        stop(paste("Model file \"", file, "\" not found", sep=""))
+    if (is.character("file")) {
+      fname <- file
+      file <- try(file(fname, "rt"))
+      if (inherits(file, "try-error")) {
+        stop(paste("Cannot open model file \"", fname, "\"", sep=""))
+      }
+      on.exit(close(file))
     }
+    else if (!inherits(file, "connection")) {
+      stop("'file' must be a character string or connection")
+    }
+    
+    ## JAGS library requires a physical file, so we need to copy
+    ## the contents of the connection to a temporary file
+    model.code <- readLines(file, warn=FALSE)
+    modfile <- tempfile()
+    writeLines(model.code, modfile)
+
     if (!missing(nchain)) {
         warning("Argument nchain in jags.model is deprecated. Use n.chains.")
         if (missing(n.chains)) {
@@ -36,7 +50,7 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
     }
     
     p <- .Call("make_console", PACKAGE="rjags") 
-    .Call("check_model", p, file, PACKAGE="rjags")
+    .Call("check_model", p, modfile, PACKAGE="rjags")
 
     varnames <- .Call("get_variable_names", p, PACKAGE="rjags")
     if (is.environment(data)) {
@@ -151,7 +165,6 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
 
     model.state <- .Call("get_state", p, PACKAGE="rjags")
     model.data <- .Call("get_data", p, PACKAGE="rjags")
-    model.code <- readLines(file, warn=FALSE)
     model <- list("ptr" = function() {p},
                   "data" = function() {model.data},
                   "model" = function() {model.code},
@@ -465,7 +478,7 @@ load.module <- function(name, path, quiet=FALSE)
     }
     ok <- .Call("load_module", name, PACKAGE="rjags")
     if (!ok) {
-        stop("module", name, "not found\n", sep=" ")
+        stop(paste("module", name, "not found\n"))
     }
     else if (!quiet) {
         cat("module", name, "loaded\n", sep=" ")
@@ -480,7 +493,7 @@ unload.module <- function(name, quiet=FALSE)
 
     ok <- .Call("unload_module", name, PACKAGE="rjags")
     if (!ok) {
-        warning("module", name, "not loaded", sep=" ")
+        warning(paste("module", name, "not loaded"))
     }
     else if (!quiet) {
         cat("Module", name, "unloaded\n", sep=" ")

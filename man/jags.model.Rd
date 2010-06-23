@@ -10,8 +10,11 @@
  jags.model(file, data=sys.frame(sys.parent()), inits, n.chains = 1,
             n.adapt=1000, nchain)}
 \arguments{
-  \item{file}{a file containing a description of the model in the
-    JAGS dialect of the BUGS language}
+  \item{file}{the name of the file containing a description of the model in the
+    JAGS dialect of the BUGS language.
+
+    Alternatively, \code{file} can be a readable text-mode connection,
+    or a complete URL.}
   \item{data}{a list or environment containing the data. Any numeric
     objects in \code{data} corresponding to node arrays used in
     \code{file} are taken to represent the values of observed nodes
