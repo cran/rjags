@@ -5,8 +5,9 @@ installation of the JAGS library.
 Windows
 -------
 
-There is no way for windows to guess where the JAGS library is installed,
-so you must supply it yourself using the variable JAGS_ROOT.  
+At compile time, there is no way for windows to guess where the JAGS
+library is installed, so you must supply the location yourself using
+the variable JAGS_ROOT.
 
 You can specify JAGS_ROOT as an environment variable, e.g.  on 32-bit
 windows:
