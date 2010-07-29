@@ -342,6 +342,8 @@ extern "C" {
 
     void R_unload_rjags(DllInfo *info)
     {
+	//FIXME: Need to zero console pointers
+
 	vector<string> loaded_modules = Console::listModules();
 	for (vector<string>::reverse_iterator p = loaded_modules.rbegin();
 	     p != loaded_modules.rend(); ++p)
