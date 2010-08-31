@@ -24,7 +24,7 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
     if (missing(file)) {
         stop("Model file name missing")
     }
-    if (is.character("file")) {
+    if (is.character(file)) {
       fname <- file
       file <- try(file(fname, "rt"))
       if (inherits(file, "try-error")) {
