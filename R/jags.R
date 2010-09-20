@@ -438,7 +438,7 @@ coda.samples <- function(model, variable.names=NULL, n.iter, thin=1, ...)
             ans.ch[[i]] <- var.i
         }
         
-        ans.ch <- as.matrix(data.frame(ans.ch))
+        ans.ch <- do.call("cbind", ans.ch)
         colnames(ans.ch) <- vnames.ch
         ans[[ch]] <- mcmc(ans.ch, start=start, thin=thin)
     }
