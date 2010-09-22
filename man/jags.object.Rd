@@ -32,4 +32,11 @@ list.samplers(object)
   indicate the sampling methods that are used to update each block
   of Nodes.
 } 
+\examples{
+  data(LINE)
+  LINE$recompile()
+  coef(LINE)
+  variable.names(LINE)
+  list.samplers(LINE)
+}
 \author{Martyn Plummer} \keyword{models}

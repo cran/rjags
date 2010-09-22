@@ -31,4 +31,12 @@ set.factory(name, type, state)
   When a module is loaded, all of its factory objects are active. This
   is also true if a module is unloaded and then reloaded.
 }
+\examples{
+list.factories("sampler")
+list.factories("monitor")
+list.factories("rng")
+set.factory("base::Slice", "sampler", FALSE)
+list.factories("sampler")
+set.factory("base::Slice", "sampler", TRUE)
+}
 \author{Martyn Plummer} \keyword{models}

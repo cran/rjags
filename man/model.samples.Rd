@@ -29,6 +29,13 @@ jags.samples(model, variable.names, n.iter, thin = 1, type="trace", ...)
   A list of \code{mcarray} objects, with one element for each 
   element of the \code{variable.names} argument.
 }
+\examples{
+  data(LINE)
+  LINE$recompile()
+  LINE.samples <- jags.samples(LINE, c("alpha","beta","sigma"),
+  n.iter=1000)
+  LINE.samples
+}
 \author{Martyn Plummer}
 \seealso{\code{\link{jags.model}}, \code{\link{coda.samples}}}
 \keyword{models}

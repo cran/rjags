@@ -20,6 +20,13 @@ list.modules()
   \item{quiet}{a logical. If \code{TRUE}, no message will be printed
     about loading the package}
 }
+\examples{
+list.modules()
+load.module("glm")
+list.modules()
+unload.module("glm")
+list.modules()
+}
 \author{Martyn Plummer}
 \keyword{interface}
 

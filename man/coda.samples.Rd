@@ -21,6 +21,12 @@ coda.samples(model, variable.names, n.iter, thin = 1, ...)
 \value{
   An \code{mcmc.list} object.
 }
+\examples{
+data(LINE)
+LINE$recompile()
+LINE.out <- coda.samples(LINE, c("alpha","beta","sigma"), n.iter=1000)
+summary(LINE.out)
+}
 \author{Martyn Plummer}
 \seealso{\code{\link{jags.samples}}, \code{\link[coda]{mcmc.list}}}
 \keyword{models}
