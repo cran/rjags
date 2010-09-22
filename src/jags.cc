@@ -54,8 +54,8 @@ static int intArg(SEXP arg)
     
     SEXP intarg;
     PROTECT(intarg = AS_INTEGER(arg));
-    int i = INTEGER_POINTER(intarg)[0];
-    UNPROTECT(1);
+    int i = INTEGER(intarg)[0];
+    UNPROTECT(1); //intarg
     return i;
 }
 
@@ -122,56 +122,49 @@ static void setSArrayValue(SArray &sarray, SEXP e)
 /* Write data from an R list into a JAGS data table */
 static void writeDataTable(SEXP data, map<string,SArray> &table)
 {
-    SEXP names;
-    PROTECT(names = getAttrib(data, R_NamesSymbol));
+    SEXP names = getAttrib(data, R_NamesSymbol);
     if (!isNewList(data)) {
 	error("data must be a list");
     }
     if (length(names) != length(data)) {
 	error("data must be a named list");
     }
-    int N = length(data);
 
-    for (int i = 0; i < N; ++i) {
-	SEXP e, e2, dim;
-	PROTECT(e = VECTOR_ELT(data, i));
-	PROTECT(dim = GET_DIM(e)); 
-	PROTECT(e2 = AS_NUMERIC(e));
-	//Replace R missing values in e2 with JAGS missing values
-	int elength = length(e2);
-	for (int j = 0; j < elength; ++j) {
-	    if (ISNA(NUMERIC_POINTER(e2)[j])) {
-		NUMERIC_POINTER(e2)[j] = JAGS_NA;
+    for (int i = 0; i < length(data); ++i) {
+	SEXP e;
+	PROTECT(e = AS_NUMERIC(VECTOR_ELT(data, i)));
+	if (length(e) > 0) {
+
+	    //Replace R missing values in e with JAGS missing values
+	    for (int j = 0; j < length(e); ++j) {
+		if (ISNA(NUMERIC_POINTER(e)[j])) {
+		    NUMERIC_POINTER(e)[j] = JAGS_NA;
+		}
 	    }
-	}
+	    
+	    string ename = CHAR(STRING_ELT(names, i));
 
-	string ename = CHAR(STRING_ELT(names, i));
-
-	int ndim = length(dim);
-	if (ndim == 0) {
-	    // Scalar or vector entry. Skip vectors of length zero
-	    if (elength > 0) {
-		SArray sarray(vector<unsigned int>(1, elength));
-		setSArrayValue(sarray, e2);
+	    SEXP dim = getAttrib(VECTOR_ELT(data, i), R_DimSymbol); 
+	    if (dim == R_NilValue) {
+		// Scalar or vector entry.
+		SArray sarray(vector<unsigned int>(1, length(e)));
+		setSArrayValue(sarray, e);
 		table.insert(pair<string,SArray>(ename, sarray));
 	    }
-	}
-	else {
-	    // Array entry
-	    vector<unsigned int> idim(ndim);
-	    SEXP dim2;
-	    PROTECT(dim2 = AS_INTEGER(dim));
-	    for (int j = 0; j < ndim; ++j) {
-		idim[j] = INTEGER_POINTER(dim2)[j];
+	    else {
+		// Array entry
+		int ndim = length(dim);
+		vector<unsigned int> idim(ndim);
+		for (int j = 0; j < ndim; ++j) {
+		    idim[j] = INTEGER(dim)[j];
+		}
+		SArray sarray(idim);
+		setSArrayValue(sarray, e);
+		table.insert(pair<string,SArray>(ename,sarray));
 	    }
-	    UNPROTECT(1);
-	    SArray sarray(idim);
-	    setSArrayValue(sarray, e2);
-	    table.insert(pair<string,SArray>(ename,sarray));
 	}
-	UNPROTECT(3);
+	UNPROTECT(1); //e
     }
-    UNPROTECT(1);
 }
 
 static Range makeRange(SEXP lower, SEXP upper)
@@ -190,7 +183,7 @@ static Range makeRange(SEXP lower, SEXP upper)
     vector<int> lvec(n), uvec(n);
     copy(INTEGER(il), INTEGER(il) + n, lvec.begin());
     copy(INTEGER(iu), INTEGER(iu) + n, uvec.begin());
-    UNPROTECT(2);
+    UNPROTECT(2); //il, iu
 
     Range r;
     try {
@@ -239,7 +232,7 @@ static SEXP readDataTable(map<string,SArray> const &table)
 	    SEXP dim;
 	    PROTECT(dim = allocVector(INTSXP, ndim));
 	    for (unsigned int k = 0; k < ndim; ++k) {
-		INTEGER_POINTER(dim)[k] = idim[k];
+		INTEGER(dim)[k] = idim[k];
 	    }
 
 	    //Set names of the dimensions 
@@ -548,10 +541,10 @@ extern "C" {
 	    map<string,SArray> param_table;
 	    console->dumpState(param_table, srng, DUMP_PARAMETERS, n+1);
 	    //Read the parameter values into an R list
-	    SEXP params, names;
+	    SEXP params;
 	    PROTECT(params = readDataTable(param_table));
 	    int nparam = length(params);
-	    PROTECT(names = getAttrib(params, R_NamesSymbol));
+	    SEXP names = getAttrib(params, R_NamesSymbol);
 	    //Now we have to make a copy of the list with an extra element
 	    SEXP staten, namesn;
 	    PROTECT(staten = allocVector(VECSXP, nparam + 1));
@@ -562,14 +555,13 @@ extern "C" {
 	    }
 	    //Assign .RNG.name as the last element
 	    SEXP rngname;
-	    PROTECT(rngname = allocVector(STRSXP,1));
-	    SET_STRING_ELT(rngname, 0, mkChar(srng.c_str()));
+	    PROTECT(rngname = mkString(srng.c_str()));
 	    SET_ELEMENT(staten, nparam, rngname);
 	    SET_STRING_ELT(namesn, nparam, mkChar(".RNG.name"));
 	    setAttrib(staten, R_NamesSymbol, namesn);
 	    //And we're done with this chain
 	    SET_ELEMENT(ans, n, staten);
-	    UNPROTECT(5); //rngname, namesn, statesn, names, params
+	    UNPROTECT(4); //rngname, namesn, staten, params
 	}
 	UNPROTECT(1); //ans
 	return ans;
@@ -585,7 +577,7 @@ extern "C" {
 	for (unsigned int i = 0; i < namevec.size(); ++i) {
 	    SET_STRING_ELT(varnames, i, mkChar(namevec[i].c_str()));
 	}
-	UNPROTECT(1);
+	UNPROTECT(1); //varnames
 	return varnames;
     }
 
@@ -613,7 +605,7 @@ extern "C" {
 	    UNPROTECT(1); //e
 	}
 	setAttrib(node_list, R_NamesSymbol, sampler_names);	
-	UNPROTECT(2); //names, ans
+	UNPROTECT(2); //node_list, sampler_names
 	return node_list;
     }
 
@@ -621,8 +613,11 @@ extern "C" {
     {
 	FactoryType ft = asFactoryType(type);
 	vector<pair<string, bool> > factories = Console::listFactories(ft);
-	    
 	unsigned int n = factories.size();
+
+	SEXP fac_list;
+	PROTECT(fac_list = allocVector(VECSXP, 2));
+
 	SEXP names, status;
 	PROTECT(names = allocVector(STRSXP, n));
 	PROTECT(status = allocVector(LGLSXP, n));
@@ -631,8 +626,6 @@ extern "C" {
 	    LOGICAL_POINTER(status)[i] = factories[i].second;
 	}
 
-	SEXP fac_list;
-	PROTECT(fac_list = allocVector(VECSXP, 2));
 	SET_ELEMENT(fac_list, 0, names);
 	SET_ELEMENT(fac_list, 1, status);
 	UNPROTECT(2); //names, status
@@ -657,26 +650,12 @@ extern "C" {
 
     SEXP get_iter(SEXP ptr)
     {
-	Console *console = ptrArg(ptr);
-	unsigned int iter = console->iter();
-
-	SEXP ans;
-	PROTECT(ans = allocVector(INTSXP, 1));
-	INTEGER(ans)[0] = iter;
-	UNPROTECT(1);
-	return ans;
+	return ScalarInteger(ptrArg(ptr)->iter());
     }
     
     SEXP get_nchain(SEXP ptr)
     {
-	Console *console = ptrArg(ptr);
-	unsigned int nchain = console->nchain();
-    
-	SEXP ans;
-	PROTECT(ans = allocVector(INTSXP,1));
-	INTEGER(ans)[0] = nchain;
-	UNPROTECT(1);
-	return ans;
+	return ScalarInteger(ptrArg(ptr)->nchain());
     }
 
     SEXP load_module(SEXP name)
