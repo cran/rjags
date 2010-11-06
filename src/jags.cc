@@ -310,7 +310,7 @@ static SEXP readDataTable(map<string,SArray> const &table)
 static FactoryType asFactoryType(SEXP type)
 {
     string ft = stringArg(type);
-    FactoryType ans;
+    FactoryType ans = SAMPLER_FACTORY;
     if (ft == "sampler") {
 	ans = SAMPLER_FACTORY;
     }
