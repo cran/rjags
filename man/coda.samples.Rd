@@ -28,5 +28,5 @@ LINE.out <- coda.samples(LINE, c("alpha","beta","sigma"), n.iter=1000)
 summary(LINE.out)
 }
 \author{Martyn Plummer}
-\seealso{\code{\link{jags.samples}}, \code{\link[coda]{mcmc.list}}}
+\seealso{\code{\link{jags.samples}}}
 \keyword{models}

@@ -1,4 +1,13 @@
-AC_INIT([rjags], [2.1.0])
+AC_INIT([rjags], [2.2.0])
+
+if test -z "${R_HOME}"; then
+   AC_MSG_ERROR("R_HOME is not defined")
+fi
+CC=`"${R_HOME}/bin/R" CMD config CC`
+CXX=`"${R_HOME}/bin/R" CMD config CXX`
+CFLAGS=`"${R_HOME}/bin/R" CMD config CFLAGS`
+CXXFLAGS=`"${R_HOME}/bin/R" CMD config CXXFLAGS`
+CPPFLAGS=`"${R_HOME}/bin/R" CMD config CPPFLAGS`
 
 AC_PREFIX_PROGRAM(jags)
 
@@ -41,10 +50,7 @@ AC_LANG_POP()
 # override this.
 
 if test -z "${LIBnn}"; then 
-   if test -z "${R_HOME}"; then
-      AC_MSG_ERROR("R_HOME is not defined")
-   fi
-   LIBnn=`${R_HOME}/bin/R CMD config LIBnn`
+   LIBnn=`"${R_HOME}/bin/R" CMD config LIBnn`
 fi
 
 #Set optional library path with option --with-jags-lib or
