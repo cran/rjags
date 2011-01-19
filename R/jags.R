@@ -107,6 +107,14 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                 inits[[".RNG.name"]] <- NULL
             }
 
+            ## Strip null initial values, but give a warning
+            null.inits <- sapply(inits, is.null)
+            if (any(null.inits)) {
+                warning("NULL initial values supplied for variable",
+                        paste(inames[null.inits], sep=","))
+                inits <- inits[!null.inits]
+            }
+
             if (!all(sapply(inits, is.numeric)))
                 return (FALSE)
             
@@ -144,6 +152,9 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                 for (i in 1:n.chains) {
                     init.values[[i]] <- inits
                 }
+            }
+            else if (!all(sapply(inits, checkParameters))) {
+                stop("Invalid initial values")
             }
             else {
                 if (length(inits) != n.chains) {
