@@ -17,7 +17,20 @@
     }
     return (regkey[["InstallDir"]])
 }
-                    
+
+.noJAGS <- function(version)
+{
+    installer <- if (.Platform$r_arch == "x64")
+        paste("JAGS-", version, "-win64.exe", sep="")
+    else
+        paste("JAGS-", version, "-win32.exe", sep="")
+    
+    paste("Failed to locate JAGS ", version, "\n\n",
+         "The rjags package is just an interface to the JAGS library\n",
+         "Make sure you have installed ", installer, " from\n",
+         "http://www.sourceforge.net/projects/mcmc-jags/files\n", sep="")
+}
+
 .onLoad <- function(lib, pkg)
 {
 ### First task is to get installation directory of JAGS
@@ -30,10 +43,7 @@
             jags.home <- .findKey("SOFTWARE\\JAGS\\JAGS-2.1.0")
         }
         if (is.null(jags.home)) {
-            stop("Failed to locate JAGS 2.2.0 installation.\n",
-                 "The rjags package is just an interface to the JAGS library\n",
-                 "which must be separately installed\n",
-                 "See http://www.sourceforge.net/projects/mcmc-jags/files\n")
+            stop(.noJAGS("2.2.0"))
         }
     }
 
