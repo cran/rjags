@@ -2,6 +2,8 @@
 {
     ## Load the rjags wrapper ...
     library.dynam("rjags", pkg, lib, local=FALSE)
+    packageStartupMessage("linking to JAGS ",
+                          .Call("get_version", PACKAGE="rjags"))
 
     ## ... then the modules
     moddir <- "@JAGS_MODULES@"

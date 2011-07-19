@@ -1,4 +1,5 @@
 \name{mcarray.object}
+\alias{mcarray.object}
 \alias{print.mcarray}
 \alias{summary.mcarray}
 \alias{as.mcmc.list.mcarray}

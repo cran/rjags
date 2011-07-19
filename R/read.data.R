@@ -1,5 +1,6 @@
 read.data <- function(file, format=c("jags","bugs"))
 {
+    .Deprecated("read.jagsdata", package="rjags")
     format <- match.arg(format)
     switch(format, "jags"=read.jagsdata(file), "bugs"=read.bugsdata(file))
 }

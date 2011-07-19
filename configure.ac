@@ -1,4 +1,4 @@
-AC_INIT([rjags], [2.2.0])
+AC_INIT([rjags], [3])
 
 if test -z "${R_HOME}"; then
    AC_MSG_ERROR("R_HOME is not defined")
@@ -72,9 +72,20 @@ else
    fi
 fi
 
+# Support for private installations of JAGS. If the jags library is not
+# on the linker path then it helps to hard-code the location of JAGS into
+# the DSO for rjags. Suggested by Doug Bates, April 2011.
+
+AC_ARG_ENABLE([rpath],
+            AC_HELP_STRING([--enable-rpath],
+                           [Hard link the location of the JAGS library]))
+if test [ "x$enable_rpath" = "xyes"]; then
+   JAGS_RPATH="-Wl,-rpath ${JAGS_LIB}"
+fi
+
 OLDFLAGS=${LDFLAGS}
 AC_LANG_PUSH(C)
-LDFLAGS=-L${JAGS_LIB}
+LDFLAGS="-L${JAGS_LIB} -Wl,-rpath ${JAGS_LIB}"
 AC_CHECK_LIB(jags, jags_version, [],
              [AC_MSG_ERROR("Cannot load JAGS library in ${JAGS_LIB}")])
 
@@ -102,6 +113,7 @@ fi
 AC_SUBST(JAGS_INCLUDE)
 AC_SUBST(JAGS_LIB)
 AC_SUBST(JAGS_MODULES)
+AC_SUBST(JAGS_RPATH)
 
 AC_OUTPUT(src/Makevars)
 AC_OUTPUT(R/unix/zzz.R)

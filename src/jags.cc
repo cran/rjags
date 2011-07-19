@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 #include <Console.h>
+#include <version.h>
 #include <util/nainf.h>
 
 #include <R.h>
@@ -37,6 +38,7 @@ int min2(int a, int b)
 std::ostringstream jags_out; //Output stream
 std::ostringstream jags_err; //Error stream
 static SEXP JAGS_console_tag; //Run-time type checking for external pointer
+static bool quiet=false; //Suppress information messages
 
 static void checkConsole (SEXP s)
 {				  
@@ -88,7 +90,7 @@ static void printMessages(bool status)
 {
     /* Print any messages from JAGS and clear the stream buffer */
     if(!jags_out.str().empty()) {
-	Rprintf("%s\n", jags_out.str().c_str());
+	if (!quiet) Rprintf("%s\n", jags_out.str().c_str());
 	jags_out.str("");
     }
     string msg;
@@ -116,6 +118,12 @@ static void setSArrayValue(SArray &sarray, SEXP e)
 {
     vector<double> v(length(e));
     copy(NUMERIC_POINTER(e), NUMERIC_POINTER(e) + length(e), v.begin());
+    //Replace R missing values with JAGS missing values
+    for (vector<double>::iterator p = v.begin(); p != v.end(); ++p) {
+	if (ISNA(*p)) {
+	    *p = JAGS_NA;
+	}
+    }
     sarray.setValue(v);
 }
 
@@ -131,19 +139,9 @@ static void writeDataTable(SEXP data, map<string,SArray> &table)
     }
 
     for (int i = 0; i < length(data); ++i) {
-	SEXP e;
-	PROTECT(e = AS_NUMERIC(VECTOR_ELT(data, i)));
+	SEXP e = AS_NUMERIC(VECTOR_ELT(data, i));
 	if (length(e) > 0) {
-
-	    //Replace R missing values in e with JAGS missing values
-	    for (int j = 0; j < length(e); ++j) {
-		if (ISNA(NUMERIC_POINTER(e)[j])) {
-		    NUMERIC_POINTER(e)[j] = JAGS_NA;
-		}
-	    }
-	    
 	    string ename = CHAR(STRING_ELT(names, i));
-
 	    SEXP dim = getAttrib(VECTOR_ELT(data, i), R_DimSymbol); 
 	    if (dim == R_NilValue) {
 		// Scalar or vector entry.
@@ -160,10 +158,9 @@ static void writeDataTable(SEXP data, map<string,SArray> &table)
 		}
 		SArray sarray(idim);
 		setSArrayValue(sarray, e);
-		table.insert(pair<string,SArray>(ename,sarray));
+		table.insert(pair<string,SArray>(ename, sarray));
 	    }
 	}
-	UNPROTECT(1); //e
     }
 }
 
@@ -327,7 +324,12 @@ static FactoryType asFactoryType(SEXP type)
 }
 
 extern "C" {
-    
+
+    void quietMessages(SEXP s)
+    {
+	quiet = boolArg(s);
+    }
+
     void R_init_rjags(DllInfo *info)
     {
 	JAGS_console_tag = install("JAGS_CONSOLE_TAG");	
@@ -426,6 +428,14 @@ extern "C" {
 	return R_NilValue;
     }
 
+    SEXP check_adaptation(SEXP ptr)
+    {
+	Console *console = ptrArg(ptr);
+	bool status = true;
+	console->checkAdaptation(status);
+	return ScalarLogical(status);
+    }
+
     SEXP is_adapting(SEXP ptr)
     {
 	Console *console = ptrArg(ptr);
@@ -435,9 +445,8 @@ extern "C" {
     SEXP adapt_off(SEXP ptr)
     {
 	Console *console = ptrArg(ptr);
-	bool status = true;
-	console->adaptOff(status);
-	return ScalarLogical(status);
+	console->adaptOff();
+	return R_NilValue;
     }
 
     SEXP update(SEXP ptr, SEXP rniter)
@@ -473,7 +482,7 @@ extern "C" {
 	}
 	if (i < n) {
 	    //Failure to set monitor i: unwind the others
-	    for (int j = i - 1; j > 0; --j) {
+	    for (int j = i - 1; j >= 0; --j) {
 		Range range = makeRange(VECTOR_ELT(lower, j), 
 					VECTOR_ELT(upper, j));
 		ptrArg(ptr)->clearMonitor(stringArg(names, j), range,
@@ -680,4 +689,10 @@ extern "C" {
 	UNPROTECT(1); //mod_list
 	return mod_list;
     }
+    
+    SEXP get_version()
+    {
+	return mkString(jags_version());
+    }
+
 }

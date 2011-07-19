@@ -14,7 +14,7 @@ set.factory(name, type, state)
 \arguments{
   \item{name}{name of the factory to set}
   \item{type}{type of factory to query or set. Possible values are
-    \code{"sampler"}, \code{"type"}, or \code{"status"}}
+    \code{"sampler"}, \code{"monitor"}, or \code{"rng"}}
   \item{state}{a logical. If \code{TRUE} then the factory will be
     active, otherwise the factory will become inactive.}
 }
