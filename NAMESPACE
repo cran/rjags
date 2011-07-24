@@ -17,7 +17,9 @@ export (
   list.samplers,
   list.factories,
   set.factory,
-  read.data
+  read.data,
+  read.jagsdata,
+  read.bugsdata
 )
 S3method(print, jags)
 S3method(coef, jags)

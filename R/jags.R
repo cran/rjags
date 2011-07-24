@@ -1,7 +1,12 @@
+.quiet.messages <- function(quiet)
+{
+    .Call("quietMessages", quiet, PACKAGE="rjags")
+}
+
 print.jags <- function(x, ...)
 {
   cat("JAGS model:\n\n")
-  
+
   model <- x$model()
   for (i in 1:length(model)) {
     cat(model[i],"\n",sep="")
@@ -19,7 +24,7 @@ print.jags <- function(x, ...)
 }
 
 jags.model <- function(file, data=sys.frame(sys.parent()), inits,
-                       n.chains = 1, n.adapt=1000, nchain)
+                       n.chains = 1, n.adapt=1000, quiet=FALSE)
 {
     if (missing(file)) {
         stop("Model file name missing")
@@ -35,21 +40,19 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
     else if (!inherits(file, "connection")) {
       stop("'file' must be a character string or connection")
     }
-    
+
     ## JAGS library requires a physical file, so we need to copy
     ## the contents of the connection to a temporary file
     model.code <- readLines(file, warn=FALSE)
     modfile <- tempfile()
     writeLines(model.code, modfile)
 
-    if (!missing(nchain)) {
-        warning("Argument nchain in jags.model is deprecated. Use n.chains.")
-        if (missing(n.chains)) {
-            n.chains = nchain
-        }
+    if (quiet) {
+        .quiet.messages(TRUE)
+        on.exit(.quiet.messages(FALSE), add=TRUE)
     }
-    
-    p <- .Call("make_console", PACKAGE="rjags") 
+
+    p <- .Call("make_console", PACKAGE="rjags")
     .Call("check_model", p, modfile, PACKAGE="rjags")
 
     varnames <- .Call("get_variable_names", p, PACKAGE="rjags")
@@ -82,7 +85,7 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
     else {
         stop("data must be a list or environment")
     }
-    
+
     .Call("compile", p, data, as.integer(n.chains), TRUE, PACKAGE="rjags")
 
 ### Setting initial values
@@ -99,7 +102,7 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
 
             if (any(duplicated(inames)))
                 return (FALSE)
-            
+
             if (any(inames==".RNG.name")) {
                 rngname <- inits[[".RNG.name"]]
                 if (!is.character(rngname) || length(rngname) != 1)
@@ -117,10 +120,10 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
 
             if (!all(sapply(inits, is.numeric)))
                 return (FALSE)
-            
+
             return (TRUE)
         }
-        
+
         setParameters <- function(inits, chain) {
             if (!is.null(inits[[".RNG.name"]])) {
                 .Call("set_rng_name", p, inits[[".RNG.name"]],
@@ -130,9 +133,9 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
             .Call("set_parameters", p, inits, as.integer(chain),
                   PACKAGE="rjags")
         }
-        
+
         init.values <- vector("list", n.chains)
-        
+
         if (is.function(inits)) {
             if (any(names(formals(inits)) == "chain")) {
                 for (i in 1:n.chains) {
@@ -163,7 +166,7 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                 init.values <- inits
             }
         }
-            
+
         for (i in 1:n.chains) {
             if (!checkParameters(init.values[[i]])) {
                 stop("Invalid parameters for chain ", i)
@@ -198,7 +201,7 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                       .Call("get_iter", p, PACKAGE="rjags")
                   },
                   "sync" = function() {
-                      
+
                       model.state <<- .Call("get_state", p, PACKAGE="rjags")
                   },
                   "recompile" = function() {
@@ -232,7 +235,7 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                           if(n.adapt > 0 && adapting) {
                               cat("Adapting\n")
                               .Call("update", p, n.adapt, PACKAGE="rjags")
-                              if (!.Call("adapt_off", p, PACKAGE="rjags")) {
+                              if (!.Call("check_adaptation", p, PACKAGE="rjags")) {
                                   warning("Adaptation incomplete");
                               }
                           }
@@ -243,7 +246,13 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
     class(model) <- "jags"
 
     if (n.adapt > 0) {
-        adapt(model, n.adapt)
+        ok <- adapt(model, n.adapt)
+        if (ok) {
+            .Call("adapt_off", p, PACKAGE="rjags")
+        }
+        else {
+            warning("Adaptation incomplete")
+        }
     }
     return(model)
 }
@@ -323,7 +332,7 @@ jags.samples <-
 
     if (!is.character(variable.names) || length(variable.names) == 0)
       stop("variable.names must be a character vector")
-     
+
     if (!is.numeric(n.iter) || length(n.iter) != 1 || n.iter <= 0)
       stop("n.iter must be a positive integer")
     if (!is.character(type))
@@ -366,7 +375,7 @@ set.factory <- function(name, type, state)
         stop("invalid name")
     if (length(state) != 1)
         stop("invalid state")
-    
+
     type <- match.arg(type, c("sampler","rng","monitor"))
     .Call("set_factory_active", name, type, as.logical(state), PACKAGE="rjags")
 }
@@ -375,7 +384,7 @@ coda.names <- function(basename, dim)
 {
     ## Utility function used to get the names of the individual elements
     ## of a node array
-  
+
     if (prod(dim) == 1)
       return(basename)
 
@@ -400,7 +409,7 @@ coda.names <- function(basename, dim)
             }
         }
     }
-    
+
     indices <- as.character(lower[1]:upper[1])
     if (ndim > 1) {
         for (i in 2:ndim) {
@@ -414,7 +423,7 @@ nchain <- function(model)
 {
     if (!inherits(model, "jags"))
       stop("Invalid JAGS model object in nchain")
-    
+
     .Call("get_nchain", model$ptr(), PACKAGE="rjags")
 }
 
@@ -437,9 +446,9 @@ coda.samples <- function(model, variable.names=NULL, n.iter, thin=1, ...)
             }
             vardim <- d[1:(length(d)-2)]
             nvar <- prod(vardim)
-            niter <- d[length(d) - 1]        
+            niter <- d[length(d) - 1]
             nchain <- d[length(d)]
-            
+
             values <- as.vector(out[[i]])
             var.i <- matrix(NA, nrow=niter, ncol=nvar)
             for (j in 1:nvar) {
@@ -448,7 +457,7 @@ coda.samples <- function(model, variable.names=NULL, n.iter, thin=1, ...)
             vnames.ch <- c(vnames.ch, coda.names(varname, vardim))
             ans.ch[[i]] <- var.i
         }
-        
+
         ans.ch <- do.call("cbind", ans.ch)
         colnames(ans.ch) <- vnames.ch
         ans[[ch]] <- mcmc(ans.ch, start=start, thin=thin)
@@ -464,7 +473,7 @@ load.module <- function(name, path, quiet=FALSE)
         ## later versions.
         return(invisible()) #Module already loaded
     }
-    
+
     if (missing(path)) {
         path = getOption("jags.moddir")
         if (is.null(path)) {
@@ -492,7 +501,7 @@ load.module <- function(name, path, quiet=FALSE)
         stop(paste("module", name, "not found\n"))
     }
     else if (!quiet) {
-        cat("module", name, "loaded\n", sep=" ")
+        message("module ", name, " loaded")
     }
     invisible()
 }

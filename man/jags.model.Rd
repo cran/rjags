@@ -8,7 +8,7 @@
  }
  \usage{
  jags.model(file, data=sys.frame(sys.parent()), inits, n.chains = 1,
-            n.adapt=1000, nchain)}
+            n.adapt=1000, quiet=FALSE)}
 \arguments{
   \item{file}{the name of the file containing a description of the model in the
     JAGS dialect of the BUGS language.
@@ -27,22 +27,21 @@
   \item{n.adapt}{the number of iterations for adaptation. See 
     \code{\link{adapt}} for details. If \code{n.adapt = 0} then no 
     adaptation takes place.}
-  \item{nchain}{deprecated argument for the number of parallel chains.  Use 
-    \code{n.chain} instead. If both \code{n.chain} and \code{nchain} are
-    supplied then the value of \code{nchain} is ignored}
+  \item{quiet}{if \code{TRUE} then messages generated during compilation
+    will be suppressed.}
 }
 \value{
   \code{jags.model} returns an object inheriting from class \code{jags}
   which can be used to generate dependent samples from the posterior
   distribution of the parameters
   
-  An object of class \code{jags} is a list of function that share a
+  An object of class \code{jags} is a list of functions that share a
   common environment. This environment encapsulates the state of the
   model, and the functions can be used to query or modify the model
   state.
   \item{ptr()}{Returns an external pointer to an object created by
     the JAGS library}
-  \item{data()}{Returns a list containing the data that defines
+  \item{data()}{Returns a list containing the data that define
     the observed nodes in the model}
   \item{model()}{Returns a character vector containing the BUGS-language
     representation of the model}
@@ -88,9 +87,8 @@
 
   Each chain in a model has its own random number generator (RNG).  RNGs
   and their initial seed values are assigned automatically when the
-  model is created. The seeds are calculated from the current time, so
-  that two models created by identical calls to \code{jags.model} will
-  not, by default, produce the same output.
+  model is created. The automatic seeds are calculated from the current
+  time.
 
   If you wish to make the output from the model reproducible, you may
   specify the RNGs to be used for each chain, and their starting seeds
