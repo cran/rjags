@@ -2,35 +2,48 @@
 \alias{adapt}
 \title{Adaptive phase for JAGS models}
 \description{
-  
-  A \code{jags} object represents a Bayesian graphical model
-  described using the BUGS language. 
+  Update the model in adaptive mode.
 }
 \usage{
-adapt(object, n.iter, \dots)
+adapt(object, n.iter, end.adaptation=FALSE, \ldots)
 }
 \arguments{
   \item{object}{a \code{jags} model object}
   \item{n.iter}{length of the adaptive phase}
+  \item{end.adaptation}{logical flag. If \code{TRUE} then adaptive
+    mode will be automatically on exit.}
   \item{\ldots}{additional arguments to the update method}
 }
 \value{
-  This function modifies the original object and returns \code{NULL}
+  Returns \code{TRUE} if all the samplers in the model have successfully
+  adapted their behaviour to optimum performance and \code{FALSE}
+  otherwise.
 }
 \details{
-  This function is not normally called by the user.
 
-  When a JAGS model is compiled, it may require an initial sampling phase
-  during which the samplers adapt their parameters to maximize their
-  efficiency. The sequence of samples generated during this
-   adaptive phase is not a Markov chain, and therefore may not be used
-  for posterior inference on the model. For this reason, the \code{adapt}
-  function must be called before samples can be generated from the
-  model using the \code{update} method.  Normally, this is done by the
+  This function is not normally called by the user.  It is called by the
   \code{jags.model} function when the model object is created.
 
-  The \code{adapt} function can only be called once on a jags model object
-  since it turns off the adaptive phase. Subsequent calls to \code{adapt}
-  do nothing.
+  When a JAGS model is compiled, it may require an initial sampling
+  phase during which the samplers adapt their behaviour to maximize
+  their efficiency (e.g. a Metropolis-Hastings random walk algorithm may
+  change its step size).  The sequence of samples generated during this
+  adaptive phase is not a Markov chain, and therefore may not be used
+  for posterior inference on the model.
+
+  The \code{adapt} function updates the model for \code{n.iter}
+  iterations in adaptive mode. Then each sampler reports whether it
+  has acheived optimal performance (e.g. whether the rejection rate of a
+  Metropolis-Hasting sampler is close to the theoretical optimum). If
+  any sampler reports failure of this test then \code{adapt} returns
+  \code{FALSE}.
+
+  By default, the \code{adapt()} function turns off adaptive mode on
+  exit.  Further calls to \code{adapt()} do nothing. The model may be
+  maintained in adaptive mode with the option \code{end.adaptation =
+  FALSE} so that successive calls to \code{adapt()} may be made until
+  adaptation is satisfactory.
+
 }
-\author{Martyn Plummer} \keyword{models}
+\author{Martyn Plummer}
+\keyword{models}
