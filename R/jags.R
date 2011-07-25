@@ -246,7 +246,7 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
     class(model) <- "jags"
 
     if (n.adapt > 0) {
-        ok <- adapt(model, n.adapt)
+        ok <- adapt(model, n.adapt, end.adaptation=FALSE)
         if (ok) {
             .Call("adapt_off", p, PACKAGE="rjags")
         }

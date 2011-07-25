@@ -74,7 +74,8 @@ fi
 
 # Support for private installations of JAGS. If the jags library is not
 # on the linker path then it helps to hard-code the location of JAGS into
-# the DSO for rjags. Suggested by Doug Bates, April 2011.
+# the DSO for rjags. Note that this is specific to GNU and not portable.
+# Suggested by Doug Bates, April 2011.
 
 AC_ARG_ENABLE([rpath],
             AC_HELP_STRING([--enable-rpath],
