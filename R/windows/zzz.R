@@ -14,6 +14,7 @@
     return(NULL)
   }
   else {
+    keynames <- rev(keynames) #Search in reverse order of release number
     regkey <- regkey[keynames]
     for (i in seq(along=keynames)) {
       if (!is.null(regkey[[i]][["InstallDir"]])) {
