@@ -535,3 +535,8 @@ isDLLLoaded <- function(file)
     }
     return(FALSE)
 }
+
+parallel.seeds <- function(factory, nchain)
+{
+    .Call("parallel_seeds", factory, nchain, PACKAGE="rjags")
+}

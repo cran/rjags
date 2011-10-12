@@ -19,7 +19,8 @@ export (
   set.factory,
   read.data,
   read.jagsdata,
-  read.bugsdata
+  read.bugsdata,
+  parallel.seeds
 )
 S3method(print, jags)
 S3method(coef, jags)
