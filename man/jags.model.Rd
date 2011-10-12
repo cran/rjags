@@ -55,9 +55,9 @@
   \item{update(n.iter)}{Updates the model by \code{n.iter} iterations.
     This is not the user-level interface: use the
     \code{\link{update.jags}} method instead.}
-  
 }
 \section{Initialization}{
+
   There are various ways to specify initial values for a JAGS model.
   If no initial values are supplied, then they will be generated
   automatically by JAGS. See the JAGS User Manual for
@@ -95,10 +95,9 @@
   as part of the \code{inits} argument (see \code{Initialization}
   above). This is done by supplementing the list of initial parameter
   values for a given chain with two additional elements named
-  \code{.RNG.name}, and \code{.RNG.seed}.
-  
+  \dQuote{.RNG.name}, and \dQuote{.RNG.seed}:
   \describe{
-    \item{.RNG.name}{a character vector of length 1. The names of
+    \item{\code{.RNG.name}}{a character vector of length 1. The names of
     the RNGs supplied in the base module are:
     \itemize{
       \item \dQuote{base::Wichmann-Hill}
@@ -106,11 +105,11 @@
       \item \dQuote{base::Super-Duper}
       \item \dQuote{base::Mersenne-Twister}
     }
-    Further RNGs may be available if other JAGS modules are loaded.}
-    \item{.RNG.seed}{a numeric vector of length 1 containing an
+    If the lecuyer module is loaded, it provides \dQuote{lecuyer::RngStream}
+    }
+    \item{\code{.RNG.seed}}{a numeric vector of length 1 containing an
     integer value.}
   }
-
 }
 \author{Martyn Plummer}
 \keyword{models}

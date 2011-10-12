@@ -5,23 +5,11 @@ installation of the JAGS library.
 Windows
 -------
 
-At compile time, there is no way for windows to guess where the JAGS
+At compile time, there is no way for Windows to guess where the JAGS
 library is installed, so you must supply the location yourself using
-the variable JAGS_ROOT.
+the make variable JAGS_ROOT, defining it in the file HOME/.R/Makevars.win
 
-You can specify JAGS_ROOT as an environment variable, e.g.  on 32-bit
-windows:
-
-set JAGS_ROOT=c:\Program Files\JAGS\JAGS-2.2.0
-
-or, for 64-bit windows
-
-set JAGS_ROOT=c:\Program Files\JAGS\JAGS-2.2.0-x64
-or
-set JAGS_ROOT=c:\Program Files (x86)\JAGS\JAGS-2.2.0
-
-In R >= 2.12.0 you will be able to set JAGS_ROOT as a (platform-
-specific) make variable in etc${R_ARCH}/Makevars.win.
+JAGS_ROOT=c:\Program Files\JAGS\JAGS-3.1.0
 
 Unix
 ----
