@@ -1,14 +1,15 @@
- \name{jags.model}
- \alias{jags.model}
- \title{Create a JAGS model object}
- \description{
-   \code{jags.model} is used to create an object representing a
-   Bayesian graphical model, specified with a BUGS-language description
-   of the prior distribution, and a set of data.
- }
- \usage{
- jags.model(file, data=sys.frame(sys.parent()), inits, n.chains = 1,
-            n.adapt=1000, quiet=FALSE)}
+\name{jags.model}
+\alias{jags.model}
+\title{Create a JAGS model object}
+\description{
+  \code{jags.model} is used to create an object representing a
+  Bayesian graphical model, specified with a BUGS-language description
+  of the prior distribution, and a set of data.
+}
+\usage{
+ jags.model(file, data=sys.frame(sys.parent()), inits,
+            n.chains = 1, n.adapt=1000, quiet=FALSE)
+}
 \arguments{
   \item{file}{the name of the file containing a description of the model in the
     JAGS dialect of the BUGS language.

@@ -1,15 +1,14 @@
 \name{jags.samples}
 \alias{jags.samples}
-%- Also NEED an '\alias' for EACH other topic documented here.
 \title{Generate posterior samples}
 \description{
   Function to extract random samples from the posterior distribution
   of the parameters of a \code{jags} model. 
 }
 \usage{
-jags.samples(model, variable.names, n.iter, thin = 1, type="trace", ...)
+jags.samples(model, variable.names, n.iter, thin = 1,
+             type="trace", ...)
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{model}{a jags model object}
   \item{variable.names}{a character vector giving the names of variables

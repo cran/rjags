@@ -54,7 +54,8 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
 
     p <- .Call("make_console", PACKAGE="rjags")
     .Call("check_model", p, modfile, PACKAGE="rjags")
-
+    unlink(modfile)
+    
     varnames <- .Call("get_variable_names", p, PACKAGE="rjags")
     if (is.environment(data)) {
         ##Get a list of numeric objects from the supplied environment
@@ -80,6 +81,18 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
         unused.variables <- setdiff(v, varnames)
         for (i in seq(along=unused.variables)) {
             warning("Unused variable \"", unused.variables[i], "\" in data")
+        }
+        ### Check for data frames
+        df <- which(sapply(data, is.data.frame))
+        for (i in seq(along=df)) {
+            if (all(sapply(data[[df[i]]], is.numeric))) {
+                #Turn numeric data frames into matrices
+                data[[df[i]]] <- as.matrix(data[[df[i]]])
+            }
+            else {
+                stop("Data frame with non-numeric elements provided as data: ",
+                     names(data)[df[i]])
+            }
         }
     }
     else {
@@ -172,6 +185,12 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                 stop("Invalid parameters for chain ", i)
             }
             setParameters(init.values[[i]], i)
+            unused.inits <- setdiff(names(init.values[[i]]), varnames)
+            unused.inits <- setdiff(unused.inits,
+                                    c(".RNG.seed", ".RNG.state", ".RNG.name"))
+            for (j in seq(along=unused.inits)) {
+                warning("Unused initial value for \"", unused.inits[j], "\" in chain ", i)
+            }
         }
     }
 

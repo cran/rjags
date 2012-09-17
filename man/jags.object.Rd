@@ -25,12 +25,13 @@ list.samplers(object)
   The \code{variable.names} function returns a character vector of
   names of node arrays used in the model.
 
-  The \code{list.samplers} returns a named list with an entry for each
-  Sampler used by the model.  Each element of the list is a character
+  The \code{list.samplers} function returns a named list with an entry
+  for each Sampler used by the model.  Each list element is a character
   vector containing the names of stochastic Nodes that are updated
-  together in a block at each iteration. The names of the list elements
-  indicate the sampling methods that are used to update each block
-  of Nodes.
+  together in a block. The names of the list elements indicate the
+  sampling methods that are used to update each block.  Stochastic nodes
+  that are updated by forward sampling from the prior are not listed.
+
 } 
 \examples{
   data(LINE)

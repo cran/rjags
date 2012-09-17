@@ -17,7 +17,7 @@ read.data(file, format=c("jags","bugs"))
 \details{
   
   \code{read.data} with \code{format="jags"} is a deprecated synonym for
-  \code{\link{read.jagsdata}} and \code{read.data} with
+  \code{\link{read.jagsdata}} and with
   \code{format="bugs"} is a deprecated synonym for
   \code{\link{read.bugsdata}}.
 
