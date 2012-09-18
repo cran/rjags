@@ -1,4 +1,4 @@
-\name{read.data}
+\name{read.jagsdata}
 \alias{read.jagsdata}
 \alias{read.bugsdata}
 \title{Read data files for jags models}
