@@ -471,30 +471,19 @@ extern "C" {
 	if (length(lower) != n || length(upper) != n) {
 	    error("length of names must match length of lower and upper");
 	}
-	int i;
-	for (i = 0; i < n; ++i) {
+
+	SEXP status; //Was attempt to set monitor successful?
+	PROTECT(status = allocVector(LGLSXP, n));
+	for (int i = 0; i < n; ++i) {
 	    Range range = makeRange(VECTOR_ELT(lower, i), VECTOR_ELT(upper, i));
-	    bool status = ptrArg(ptr)->setMonitor(stringArg(names,i), range, 
-						  intArg(thin), 
-						  stringArg(type));
-	    if (!status)
-		break;
-	}
-	if (i < n) {
-	    //Failure to set monitor i: unwind the others
-	    for (int j = i - 1; j >= 0; --j) {
-		Range range = makeRange(VECTOR_ELT(lower, j), 
-					VECTOR_ELT(upper, j));
-		ptrArg(ptr)->clearMonitor(stringArg(names, j), range,
-					  stringArg(type));
-	    }
-	    printMessages(false);
-	    return ScalarLogical(FALSE);
-	}
-	else {
+	    bool ok = ptrArg(ptr)->setMonitor(stringArg(names,i), range, 
+					      intArg(thin), 
+					      stringArg(type));
 	    printMessages(true);
-	    return ScalarLogical(TRUE);
+	    LOGICAL_POINTER(status)[i] = ok;
 	}
+	UNPROTECT(1); //status
+	return status;
     }
 
     SEXP clear_monitor(SEXP ptr, SEXP name, SEXP lower, SEXP upper, SEXP type)
