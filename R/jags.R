@@ -358,16 +358,19 @@ jags.samples <-
       stop("type must be a character vector")
 
     pn <- parse.varnames(variable.names)
-    .Call("set_monitors", model$ptr(), pn$names, pn$lower, pn$upper,
-          as.integer(thin), type, PACKAGE="rjags")
+    status <- .Call("set_monitors", model$ptr(), pn$names, pn$lower, pn$upper,
+                    as.integer(thin), type, PACKAGE="rjags")
+    if (!any(status)) stop("No valid monitors set")
     update(model, n.iter, ...)
     ans <- .Call("get_monitored_values", model$ptr(), type, PACKAGE="rjags")
     for (i in seq(along=ans)) {
         class(ans[[i]]) <- "mcarray"
     }
     for (i in seq(along=variable.names)) {
-      .Call("clear_monitor", model$ptr(), pn$names[i], pn$lower[[i]],
-            pn$upper[[i]], type, PACKAGE="rjags")
+        if (status[i]) {
+            .Call("clear_monitor", model$ptr(), pn$names[i], pn$lower[[i]],
+                  pn$upper[[i]], type, PACKAGE="rjags")
+        }
     }
     return(ans)
 }
