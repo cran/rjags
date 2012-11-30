@@ -12,9 +12,9 @@
     load.module("dic", quiet=TRUE)
     limits <- vector("list",2)
     pdtype <- match.arg(type, c("pD","popt"))
-    ok <- .Call("set_monitors", model$ptr(), c("deviance",pdtype),
-                limits, limits, as.integer(thin), "mean", PACKAGE="rjags")
-    if (!isTRUE(ok)) {
+    status <- .Call("set_monitors", model$ptr(), c("deviance",pdtype),
+                    limits, limits, as.integer(thin), "mean", PACKAGE="rjags")
+    if (!any(status)) {
       stop("Failed to set monitors")
     }
     
@@ -24,11 +24,15 @@
     for (i in seq(along=dev)) {
         class(dev[[i]]) <- "mcarray"
     }
-    
-    .Call("clear_monitor", model$ptr(), "deviance", NULL, NULL, "mean",
-          PACKAGE="rjags")
-    .Call("clear_monitor", model$ptr(), pdtype, NULL, NULL, "mean",
-          PACKAGE="rjags")
+
+    if (status[1]) {
+        .Call("clear_monitor", model$ptr(), "deviance", NULL, NULL, "mean",
+              PACKAGE="rjags")
+    }
+    if (status[2]) {
+        .Call("clear_monitor", model$ptr(), pdtype, NULL, NULL, "mean",
+              PACKAGE="rjags")
+    }
 
     ans <- list("deviance" = dev$deviance, "penalty" = dev[[type]],
                 "type" = type)
