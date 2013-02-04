@@ -84,17 +84,24 @@
                 "modules"))
     }
     library.dynam("rjags", pkg, lib)
-    packageStartupMessage("linking to JAGS ",
-                          .Call("get_version", PACKAGE="rjags"))
-    load.module("basemod")
-    load.module("bugs")
-    
+    load.module("basemod", quiet=TRUE)
+    load.module("bugs", quiet=TRUE)
+
 ### Set progress bar type
     
     if (is.null(getOption("jags.pb"))) {
         options("jags.pb"="text")
     }
 }
+
+.onAttach <- function(lib, pkg)
+{
+    packageStartupMessage("Linked to JAGS ",
+                          .Call("get_version", PACKAGE="rjags"))
+    packageStartupMessage("Loaded modules: ",
+                          paste(list.modules(), collapse=","))
+}
+
 
 .onUnload <- function(libpath)
 {

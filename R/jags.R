@@ -66,7 +66,7 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
     }
     else if (is.list(data)) {
         v <- names(data)
-        if (is.null(v)) {
+        if (is.null(v) && length(v) != 0) {
             stop("data must be a named list")
         }
         if (any(nchar(v)==0)) {
@@ -83,7 +83,7 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
             warning("Unused variable \"", unused.variables[i], "\" in data")
         }
         ### Check for data frames
-        df <- which(sapply(data, is.data.frame))
+        df <- which(as.logical(sapply(data, is.data.frame)))
         for (i in seq(along=df)) {
             if (all(sapply(data[[df[i]]], is.numeric))) {
                 #Turn numeric data frames into matrices
@@ -94,6 +94,9 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                      names(data)[df[i]])
             }
         }
+    }
+    else if (is.null(data)) {
+        data <- list()
     }
     else {
         stop("data must be a list or environment")
