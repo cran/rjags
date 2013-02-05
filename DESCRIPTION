@@ -1,6 +1,6 @@
 Package: rjags
-Version: 3-9
-Date: 2012-11-30
+Version: 3-10
+Date: 2013-02-04
 Title: Bayesian graphical models using MCMC
 Authors@R: person("Martyn", "Plummer", role=c("aut","cre"),
         email="plummerm@iarc.fr")
@@ -9,8 +9,8 @@ SystemRequirements: jags (>= 3.0.0)
 Description: Interface to the JAGS MCMC library
 License: GPL (== 2)
 URL: http://mcmc-jags.sourceforge.net
-Packaged: 2012-11-30 17:48:04 UTC; martyn
+Packaged: 2013-02-04 19:26:32 UTC; martyn
 Author: Martyn Plummer [aut, cre]
 Maintainer: Martyn Plummer <plummerm@iarc.fr>
 Repository: CRAN
-Date/Publication: 2012-11-30 19:47:26
+Date/Publication: 2013-02-05 11:25:21
