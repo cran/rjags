@@ -106,38 +106,49 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
 
 ### Setting initial values
 
-    if (!missing(inits)) {
+    if (!missing(inits) && !is.null(inits))  {
 
         checkParameters <- function(inits) {
-            if(!is.list(inits))
-                return (FALSE)
+            if(!is.list(inits)) {
+                return("inits parameter must be a list")
+            }
 
             inames <- names(inits)
-            if (is.null(inames) || any(nchar(inames) == 0))
-                return (FALSE)
+            if (is.null(inames) || any(nchar(inames) == 0)) {
+                return("No variable names supplied for the initial values")
+            }
 
-            if (any(duplicated(inames)))
-                return (FALSE)
+            dupinames <- duplicated(inames)
+            if (any(dupinames)) {
+                return(paste("Duplicated initial values for variable(s): ",
+                             paste0(unique(inames[dupinames]), collapse = ", ")
+                             )
+                       )
+            }
 
             if (any(inames==".RNG.name")) {
                 rngname <- inits[[".RNG.name"]]
-                if (!is.character(rngname) || length(rngname) != 1)
-                    return (FALSE)
+                if (!is.character(rngname) || length(rngname) != 1) {
+                    return("Incorrect .RNG.name value")
+                }
                 inits[[".RNG.name"]] <- NULL
             }
 
             ## Strip null initial values, but give a warning
             null.inits <- sapply(inits, is.null)
             if (any(null.inits)) {
-                warning("NULL initial values supplied for variable",
-                        paste(inames[null.inits], sep=","))
+                warning("NULL initial value supplied for variable(s) ",
+                        paste(inames[null.inits], collapse=", "))
                 inits <- inits[!null.inits]
             }
 
-            if (!all(sapply(inits, is.numeric)))
-                return (FALSE)
+            num_vals <- sapply(inits, is.numeric)
+            if (any(!num_vals)) {
+                return("Non-numeric initial values supplied for variable(s) ",
+                       paste(inames[!num_vals], collapse=", "))
+            }
 
-            return (TRUE)
+            return ("ok")
         }
 
         setParameters <- function(inits, chain) {
@@ -166,33 +177,32 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
         }
         else if (is.list(inits)) {
 
-            if (checkParameters(inits)) {
+            if ( !is.null(names(inits)) ) {
                 ## Replicate initial values for all chains
                 for (i in 1:n.chains) {
                     init.values[[i]] <- inits
                 }
             }
-            else if (!all(sapply(inits, checkParameters))) {
-                stop("Invalid initial values")
-            }
             else {
                 if (length(inits) != n.chains) {
-                    stop("Length mismatch in inits")
+                    stop("Length mismatch between inits and n.chains")
                 }
                 init.values <- inits
             }
         }
 
         for (i in 1:n.chains) {
-            if (!checkParameters(init.values[[i]])) {
-                stop("Invalid parameters for chain ", i)
+            msg  <- checkParameters(init.values[[i]])
+            if (!identical(msg, "ok")) {
+                stop("Invalid parameters for chain ", i, ":\n", msg);
             }
             setParameters(init.values[[i]], i)
             unused.inits <- setdiff(names(init.values[[i]]), varnames)
             unused.inits <- setdiff(unused.inits,
                                     c(".RNG.seed", ".RNG.state", ".RNG.name"))
             for (j in seq(along=unused.inits)) {
-                warning("Unused initial value for \"", unused.inits[j], "\" in chain ", i)
+                warning("Unused initial value for \"", unused.inits[j],
+                        "\" in chain ", i)
             }
         }
     }
