@@ -29,7 +29,7 @@
     \code{\link{adapt}} for details. If \code{n.adapt = 0} then no 
     adaptation takes place.}
   \item{quiet}{if \code{TRUE} then messages generated during compilation
-    will be suppressed.}
+    will be suppressed, as well as the progress bar during adaptation.}
 }
 \value{
   \code{jags.model} returns an object inheriting from class \code{jags}
