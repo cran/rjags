@@ -1,4 +1,22 @@
-/* Utility function to get parallel seeds for execution on a
+/*
+ *  R package rjags file src/parallel.cc 
+ *  Copyright (C) 2011-2013 Martyn Plummer
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  version 2 as published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  A copy of the GNU General Public License is available at
+ *  http://www.r-project.org/Licenses/
+ */
+
+
+/* Utility function to get parallel seeds for execution in parallel
  *
  * Makes extensive use of JAGS internals and is potentially unsafe on Windows
  * if an exception is thrown.

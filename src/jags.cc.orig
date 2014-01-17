@@ -34,6 +34,17 @@ using std::pair;
 using std::vector;
 using std::copy;
 
+using jags::SArray;
+using jags::Console;
+using jags::Range;
+using jags::DUMP_DATA;
+using jags::DUMP_PARAMETERS;
+using jags::FactoryType;
+using jags::SAMPLER_FACTORY;
+using jags::MONITOR_FACTORY;
+using jags::RNG_FACTORY;
+using jags::RNG;
+
 /* Workaround length being remapped to Rf_length
    by the preprocessor */
 
@@ -162,9 +173,11 @@ static void writeDataTable(SEXP data, map<string,SArray> &table)
 	    SEXP dim = getAttrib(VECTOR_ELT(data, i), R_DimSymbol); 
 	    if (dim == R_NilValue) {
 		// Scalar or vector entry.
+		/*
 		SArray sarray(vector<unsigned int>(1, length(e)));
 		setSArrayValue(sarray, e);
 		table.insert(pair<string,SArray>(ename, sarray));
+		*/
 	    }
 	    else {
 		// Array entry
@@ -173,9 +186,11 @@ static void writeDataTable(SEXP data, map<string,SArray> &table)
 		for (int j = 0; j < ndim; ++j) {
 		    idim[j] = INTEGER(dim)[j];
 		}
+		/*
 		SArray sarray(idim);
 		setSArrayValue(sarray, e);
 		table.insert(pair<string,SArray>(ename, sarray));
+		*/
 	    }
 	}
     }
@@ -200,12 +215,14 @@ static Range makeRange(SEXP lower, SEXP upper)
     UNPROTECT(2); //il, iu
 
     Range r;
+/*
     try {
 	r = Range(lvec, uvec);
     }
     catch (std::logic_error except) {                                   
 	error("Invalid range");
     }
+*/
     return r;
 }
 
@@ -360,7 +377,9 @@ extern "C" {
 	for (vector<string>::reverse_iterator p = loaded_modules.rbegin();
 	     p != loaded_modules.rend(); ++p)
 	{
-	    Console::unloadModule(*p);
+	    /*
+	      Console::unloadModule(*p);
+	    */
 	}
     }
 
@@ -416,25 +435,31 @@ extern "C" {
 
 	map<string, SArray> table;
 	writeDataTable(data, table);
+	/*
 	bool status = ptrArg(ptr)->compile(table, intArg(nchain),
 					   boolArg(gendata));
 	printMessages(status);
+	*/
 	return R_NilValue;
     }
 
     SEXP set_parameters(SEXP ptr, SEXP data, SEXP nchain)
     {
+/*
 	map<string,SArray> data_table;
 	writeDataTable(data, data_table);
 	bool status = ptrArg(ptr)->setParameters(data_table, intArg(nchain));
 	printMessages(status);
 	return R_NilValue;
+*/
     }
-  
+
     SEXP set_rng_name(SEXP ptr, SEXP name, SEXP chain)
     {
+	/*
 	bool status = ptrArg(ptr)->setRNGname(stringArg(name), intArg(chain));
 	printMessages(status);
+	*/
  	return R_NilValue;
     }
   
@@ -493,11 +518,13 @@ extern "C" {
 	PROTECT(status = allocVector(LGLSXP, n));
 	for (int i = 0; i < n; ++i) {
 	    Range range = makeRange(VECTOR_ELT(lower, i), VECTOR_ELT(upper, i));
+	    /*
 	    bool ok = ptrArg(ptr)->setMonitor(stringArg(names,i), range, 
 					      intArg(thin), 
 					      stringArg(type));
 	    printMessages(true);
 	    LOGICAL_POINTER(status)[i] = ok;
+	    */
 	}
 	UNPROTECT(1); //status
 	return status;
@@ -675,12 +702,16 @@ extern "C" {
 
     SEXP load_module(SEXP name)
     {
-	return ScalarLogical(Console::loadModule(stringArg(name)));
+	/*
+	  return ScalarLogical(Console::loadModule(stringArg(name)));
+	*/
     }
 
     SEXP unload_module(SEXP name)
     {
-	return ScalarLogical(Console::unloadModule(stringArg(name)));
+	/*
+	  return ScalarLogical(Console::unloadModule(stringArg(name)));
+	*/
     }
 
     SEXP get_modules()

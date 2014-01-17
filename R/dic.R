@@ -1,3 +1,19 @@
+#  R package rjags file R/dic.R
+#  Copyright (C) 2009-2013 Martyn Plummer
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License version
+#  2 as published by the Free Software Foundation.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+#
+
 "dic.samples" <-
   function(model, n.iter, thin=1, type="pD", ...)
 {
@@ -57,14 +73,25 @@
             
 "diffdic" <- function(dic1,dic2)
 {
-    if(!identical(names(dic1$deviance),names(dic2$deviance))) {
-        stop("incompatible dic objects: variable names differ")
-    }
     if (!identical(dic1$type, dic2$type)) {
         stop("incompatible dic object: different penalty types")
     }
+    n1 <- names(dic1$deviance)
+    n2 <- names(dic2$deviance)
+    if (!identical(n1, n2)) {
+
+        ### Try matching names in lexicographic order
+        if(!identical(sort(n1), sort(n2))) {
+            stop("incompatible dic objects: variable names differ")
+        }
+        ### Reset names to order of the first argument
+        ord1 <- order(n1)
+        ord2 <- order(n2)
+        dic2$deviance[ord1] <- dic2$deviance[ord2]
+        dic2$penalty[ord1] <- dic2$penalty[ord2]
+    }
     delta <- sapply(dic1$deviance, mean) + sapply(dic1$penalty, mean) -
-      sapply(dic2$deviance, mean) - sapply(dic2$penalty, mean)
+        sapply(dic2$deviance, mean) - sapply(dic2$penalty, mean)
     class(delta) <- "diffdic"
     return(delta)
 }

@@ -1,3 +1,19 @@
+#  R package rjags file R/jags.R
+#  Copyright (C) 2006-2013 Martyn Plummer
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License version
+#  2 as published by the Free Software Foundation.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+#
+
 .quiet.messages <- function(quiet)
 {
     .Call("quietMessages", quiet, PACKAGE="rjags")
@@ -30,23 +46,27 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
         stop("Model file name missing")
     }
     if (is.character(file)) {
-      fname <- file
-      file <- try(file(fname, "rt"))
-      if (inherits(file, "try-error")) {
-        stop(paste("Cannot open model file \"", fname, "\"", sep=""))
+      modfile <- file
+      ## Check file exists and can be opened in text mode
+      con <- try(file(modfile, "rt"))
+      if (inherits(con, "try-error")) {
+        stop(paste("Cannot open model file \"", modfile, "\"", sep=""))
       }
-      on.exit(close(file))
+      close(con)
+      ## Need this for print method and for recompile function
+      model.code <- readLines(file, warn=FALSE)  
+    } 
+    else if (inherits(file, "connection")) {
+        modfile <- tempfile()
+        ## JAGS library requires a physical file, so we need to copy
+        ## the contents of the connection to a temporary file
+        model.code <- readLines(file, warn=FALSE)
+        writeLines(model.code, modfile)
     }
-    else if (!inherits(file, "connection")) {
-      stop("'file' must be a character string or connection")
+    else {
+        stop("'file' must be a character string or connection")
     }
-
-    ## JAGS library requires a physical file, so we need to copy
-    ## the contents of the connection to a temporary file
-    model.code <- readLines(file, warn=FALSE)
-    modfile <- tempfile()
-    writeLines(model.code, modfile)
-
+    
     if (quiet) {
         .quiet.messages(TRUE)
         on.exit(.quiet.messages(FALSE), add=TRUE)
@@ -54,7 +74,9 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
 
     p <- .Call("make_console", PACKAGE="rjags")
     .Call("check_model", p, modfile, PACKAGE="rjags")
-    unlink(modfile)
+    if (!is.character(file)) {
+        unlink(modfile) #Remove temporary copy
+    }
     
     varnames <- .Call("get_variable_names", p, PACKAGE="rjags")
     if (is.environment(data)) {
@@ -278,7 +300,8 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
     class(model) <- "jags"
 
     if (n.adapt > 0) {
-        ok <- adapt(model, n.adapt, end.adaptation=FALSE)
+        pb <- if(quiet) NULL else getOption("jags.pb")
+        ok <- adapt(model, n.adapt, end.adaptation=FALSE, progress.bar=pb)
         if (ok) {
             .Call("adapt_off", p, PACKAGE="rjags")
         }
