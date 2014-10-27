@@ -1,4 +1,4 @@
-563fb77204773dcc20b20d4e7b208270 *DESCRIPTION
+9c23fbbde4fe6e64c5e54a976a1edc5b *DESCRIPTION
 0a9c75ebfaed12d750615d9b0551516f *NAMESPACE
 5fcd1fe183901e91067edf32f69da754 *R/dic.R
 ea65a00a1e333d08b4591faa7ce45e72 *R/jags.R
@@ -8,7 +8,7 @@ a87a803a23c9445e08302a7c27a3a0c5 *R/mcarray.R
 a4bb7181ba06fab0cdd88b07ef471b8b *R/unix/progress.bar.R
 0c0c06beefd4a9f3871c7bbded3bc0b6 *R/unix/zzz.R.in
 921d90c18a3aac1ff6ce243e187a0fae *R/windows/progress.bar.R
-5cf0db1a55c61dcd451f1c35e67bae87 *R/windows/zzz.R
+3684e8e0c86c5e541288e73eaa31ee81 *R/windows/zzz.R
 a72903f073b54477cc1f3ed2e402ba00 *README
 857c748215feff397d05cdaf65e7f6c2 *cleanup
 8808d18f6328573eafbe5260a3bbcdb2 *configure
@@ -34,5 +34,4 @@ fc82322b1e9e147f33cfb2b214975009 *man/read.jagsdata.Rd
 939955fd6870cdd4be7cc965138c1995 *src/Makevars.in
 2bcb4f62b4cb348febbdaf470dc00517 *src/Makevars.win
 7476839fa1d15d4e2507d6518c2a9ea2 *src/jags.cc
-150ecba2c16b29b05150c16fccf72ec8 *src/jags.cc.orig
 8ecf803a42ae5d48f5b78b79c9098dbd *src/parallel.cc

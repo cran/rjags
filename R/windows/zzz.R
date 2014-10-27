@@ -67,23 +67,47 @@
       jags.home <- latest[[1]][["InstallDir"]]
     }
     
-### Add jags.home to the windows PATH, if not already present
+### Check that jags.home actually exists and contains the DLL
 
+    if (!file.exists(jags.home)) {
+	stop(jags.home, " not found\n\n",
+            "rjags is looking for the JAGS library in\n", jags.home,
+             "\nbut this folder does not exist\n")
+    }
     bindir <- file.path(jags.home, .Platform$r_arch, "bin")
+    jags.dll <- file.path(bindir, 
+			  paste("libjags-", jags.major, .Platform$dynlib.ext,
+                                sep=""))
+    if (!file.exists(jags.dll)) {
+        stop(jags.dll, " not found")
+    }
+
+### Add the JAGS bin to the windows PATH, if not already present
+
     path <- Sys.getenv("PATH")
     split.path <- strsplit(path, .Platform$path.sep)$PATH
     if (!any(split.path == bindir)) {
         path <- paste(bindir, path, sep=.Platform$path.sep)
         Sys.setenv("PATH"=path)
     }
-    
+
+### Load the rjags dll
+    library.dynam("rjags", pkg, lib)
+
 ### Set the module directory, if the option jags.moddir is not already set
     
     if (is.null(getOption("jags.moddir"))) {
         options("jags.moddir" = file.path(jags.home, .Platform$r_arch,
                 "modules"))
     }
-    library.dynam("rjags", pkg, lib)
+
+### Check that the module directory actually exists
+    moddir <- getOption("jags.moddir")
+    if (!file.exists(moddir)) {
+        stop(moddir, " not found\n\n",
+             "rjags is looking for the JAGS modules in\n", moddir,
+             "\nbut this folder does not exist\n")
+    }
     load.module("basemod", quiet=TRUE)
     load.module("bugs", quiet=TRUE)
 
