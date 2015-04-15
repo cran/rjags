@@ -159,15 +159,15 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
             ## Strip null initial values, but give a warning
             null.inits <- sapply(inits, is.null)
             if (any(null.inits)) {
-                warning("NULL initial value supplied for variable(s) ",
-                        paste(inames[null.inits], collapse=", "))
+                warning(paste("NULL initial value supplied for variable(s) ",
+                        paste(inames[null.inits], collapse=", "), sep=""))
                 inits <- inits[!null.inits]
             }
 
             num_vals <- sapply(inits, is.numeric)
             if (any(!num_vals)) {
-                return("Non-numeric initial values supplied for variable(s) ",
-                       paste(inames[!num_vals], collapse=", "))
+                return(paste("Non-numeric initial values supplied for variable(s) ",
+                       paste(inames[!num_vals], collapse=", "), sep=""))
             }
 
             return ("ok")
@@ -397,7 +397,7 @@ jags.samples <-
     status <- .Call("set_monitors", model$ptr(), pn$names, pn$lower, pn$upper,
                     as.integer(thin), type, PACKAGE="rjags")
     if (!any(status)) stop("No valid monitors set")
-    update(model, n.iter, ...)
+    update.jags(model, n.iter, ...)
     ans <- .Call("get_monitored_values", model$ptr(), type, PACKAGE="rjags")
     for (i in seq(along=ans)) {
         class(ans[[i]]) <- "mcarray"
