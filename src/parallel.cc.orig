@@ -69,11 +69,12 @@ static char const *stringArg(SEXP arg, unsigned int i = 0)
 
 extern "C" {
 
-    SEXP parallel_seeds(SEXP fac, SEXP n)
+    SEXP parallel_seeds(SEXP fac, SEXP n, SEXP init)
     {
 	unsigned int nchain = intArg(n);
 	string factory = stringArg(fac);
-	
+	unsigned int init = intArg(init);
+
 	vector<RNG*> rngvec;
 	list<pair<RNGFactory*,bool> > const &flist = Model::rngFactories();
 	for (list<pair<RNGFactory*, bool> >::const_iterator p = flist.begin(); 
@@ -81,6 +82,7 @@ extern "C" {
 	{
 	    if (p->first->name() == factory) {
 		if (p->second) {
+		    p->first->setSeed(init);
 		    rngvec = p->first->makeRNGs(nchain);
 		    break;
 		}

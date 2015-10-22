@@ -1,0 +1,183 @@
+Installation instructions for the rjags package
+-----------------------------------------------
+
+The rjags package is an interface to the JAGS library.  In order to
+build a binary package, or install from source, you must have a matching
+installation of the JAGS library.
+
+Contents:
+
+1 Windows
+2 Unix/Linux: pkg-config
+3 Unix/Linux: legacy configuration
+4 Failure to load
+
+1 Windows
+---------
+where HOME is the Folder that is the default working directory when
+you launch R.
+
+If you are compiling the rjags package from source then you must
+supply the location of JAGS yourself using the make variable
+JAGS_ROOT, defining it in the file HOME/.R/Makevars.win, e.g.
+
+JAGS_ROOT=c:/Progra~1/JAGS/JAGS-4.0.0
+
+where HOME is the default starting directory for an R session launched
+from the start menu (typically your Documents folder).
+
+If you are installing the Windows binary rjags package, then R will
+consult the Windows registry to find the location of
+JAGS. Alternatively, you can specify the location of JAGS by setting
+the environment variable JAGS_HOME.
+
+2 Unix/Linux: pkg-config
+------------------------
+
+If you have pkg-config installed then you can use it to detect the
+JAGS library and set the compiler and linker flags for rjags. You
+can test this capability in a unix shell by typing
+
+pkg-config --modversion jags
+
+If this does not detect your JAGS installation then it means that the
+file 'jags.pc' installed is not on the search path of pkg-config. In
+this case you should add it by setting the environment variable
+PKG_CONFIG_PATH. For example if the full path to 'jags.pc' is
+'/usr/local/lib64/pkgconfig/jags.pc', then set
+
+export PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig
+
+before installing rjags.
+
+Recall that most Linux distributions divide software into `user' and
+`developer' versions, so if you are using a pre-built JAGS binary
+package for your Linux distribution then remember to install the
+developer version before attempting to install the rjags package.
+
+3 Unix/Linux: legacy configuration
+----------------------------------
+
+Legacy configuration is used whenever pkg-config fails to detect the
+JAGS library.
+
+The configure script will try to guess the location of the JAGS
+library. It does this by querying the R and jags executables, so both
+of these need to be on your PATH for automatic detection to work
+properly.
+
+If you have installed JAGS in a non-standard place then you may need
+to supply hints to the configure script.  This can be done by 
+passing configure arguments or setting environment variables (see below).
+
+The options/environment variables correspond to options that were
+used when JAGS was installed. They are shown in the table below:
+
+JAGS configure  rjags configure        Environmnent     default
+option          option                 variable
+--------------  ---------------        ------------     -------
+--prefix        --with-jags-prefix     JAGS_PREFIX      /usr/local
+--libdir        --with-jags-libdir     JAGS_LIBDIR      ${prefix}/${LIBnn}
+--includedir    --with-jags-includedir JAGS_INCLUDEDIR  ${prefix}/include
+
+By default LIBnn is the value returned by `R CMD config LIBnn`.
+This can be overridden by setting the environment variable LIBnn.
+
+3.1 Setting the prefix
+----------------------
+
+By default, all JAGS files are installed in subdirectories of /usr/local.
+This is the prefix of the installation, and it can be changed to any
+value by supplying the --prefix argument when installing JAGS.
+
+- The jags script goes in ${prefix}/bin
+- The jags executable launched by the script goes in ${prefix}/libexec
+- The libraries go in ${prefix}/lib
+- The modules go in ${prefix}/lib/JAGS
+- The headers go in ${prefix}/include/JAGS
+
+Suppose that when you installed JAGS, you used the configure argument
+'--prefix=/opt' to install JAGS in the directory /opt instead of the
+default /usr/local.  If /opt/bin is on your PATH then the configure
+script should still automatically detect JAGS for you.  Otherwise, you
+need to supply the configure argument '--with-jags-prefix=/opt' when
+installing rjags.
+
+Alternatively you can set the environment variable JAGS_PREFIX
+before building rjags:
+
+export JAGS_PREFIX=/opt
+
+3.2 Setting the library directory
+---------------------------------
+
+Suppose you are on a 64-bit system and installed the JAGS library in
+/usr/local/lib64 instead of the default /usr/local/lib.  If R_HOME is
+/usr/lib64/R then the configure script should automatically look in
+the right place for the JAGS library.  Otherwise, you need to supply
+the configure argument '--with-jags-libdir=/usr/local/lib64' when
+installing rjags.
+
+Alternatively you can set the environment variable JAGS_LIBDIR
+before building rjags:
+
+export JAGS_LIBDIR=/usr/local/lib64
+
+If the library directory is in the right prefix, but just has a
+different name (e.g. ${prefix}/lib64 or ${prefix}/lib32 instead of the
+default ${prefix}/lib), then you can just set the environment variable
+LIBnn.
+
+export LIBnn=lib64
+
+3.3 Setting the include directory
+---------------------------------
+
+It is unlikely that you will need to set the include directory, as
+there is no good reason for changing the default. Nevertheless,
+this option is included for completeness.
+
+By default, the header files go into ${prefix}/include, in a
+sub-directory JAGS. If you have put this subdirectory somewhere other
+than ${prefix}/include by supplying the --includedir option to
+configure when you built JAGS, then the corresponding option for rjags
+is --with-jags-includedir.
+
+Alternatively, you may set the environment variable JAGS_INCLUDEDIR.
+
+
+3.4 Passing configure arguments
+-------------------------------
+
+Configure options for rjags are passed via the --configure-args
+argument to R CMD INSTALL:
+
+  R CMD INSTALL --configure-args='--with-jags...'
+
+or, if you are using the install.packages() function from an R
+session, using the configure.args argument:
+
+  install.packages("rjags", configure.args="--with-jags...")
+
+If configure arguments are set, they always override the corresponding
+environment variables.
+
+4 Failure to load 
+-------------------
+
+The rjags package may compile correctly but then fail with the message
+"ERROR:loading failed". When this happens, it is because the JAGS
+library is installed is not on the default linker path.
+
+On some systems it is possible to hard-code the location of the JAGS
+library at compile time so that the linker knows where to look. This
+can be done by adding the configure argument --enable-rpath, e.g.
+
+R CMD INSTALL --configure-args="--prefix=/opt --enable-rpath" rjags
+
+However, please note that this is not portable and may not work on
+your system. In this case you need to set the environment variable
+LD_LIBRARY_PATH to include the directory containing the jags libraries
+before starting R, e.g
+
+export LD_LIBRARY_PATH=/opt/lib:$LD_LIBRARY_PATH

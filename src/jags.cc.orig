@@ -46,6 +46,9 @@ using jags::MONITOR_FACTORY;
 using jags::RNG_FACTORY;
 using jags::RNG;
 
+using jags::newConsole;
+using jags::deleteConsole;
+
 /* Workaround length being remapped to Rf_length
    by the preprocessor */
 
@@ -371,23 +374,21 @@ extern "C" {
 	}
     }
 
-    SEXP clear_console(SEXP s)
+    void clear_console(SEXP s)
     {
 	/* Finalizer for console pointers. Frees the external memory
 	   and zeroes the pointer when the R object is deleted */
 
-	checkConsole(s);
 	Console *console = static_cast<Console*>(R_ExternalPtrAddr(s));
-	if (console != NULL) {
-	    delete console;
+	if (console) {
+	    deleteConsole(console);
 	    R_ClearExternalPtr(s);
 	}
-	return R_NilValue;
     }
 
     SEXP make_console()
     {
-	void *p = static_cast<void*>(new Console(jags_out, jags_err));
+	void *p = static_cast<void*>(newConsole(jags_out, jags_err));
 	SEXP ptr = R_MakeExternalPtr(p, JAGS_console_tag, R_NilValue);
 	R_RegisterCFinalizer(ptr, (R_CFinalizer_t) clear_console);
 	return ptr;

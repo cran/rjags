@@ -21,7 +21,7 @@ print.mcarray <- function(x, ...)
     }
     print(summary(x, mean))
 }
-   
+
 summary.mcarray <- function(object, FUN, ...)
 {
     if (is.null(dim(object)) || is.null(names(dim(object)))) {
@@ -43,9 +43,23 @@ print.summary.mcarray <- function(x, ...)
     cat("mcarray:\n")
     print(x$stat,...)
     if (length(x$drop.dims) > 0) {
-        cat("\nMarginalizing over:", 
+        cat("\nMarginalizing over:",
             paste(paste(names(x$drop.dims), "(", x$drop.dims,")" , sep=""),
                   collapse=","),"\n")
+    }
+}
+
+make.coda.names <- function(basename, dim)
+{
+    if (all(dim == 1)) {
+        return(basename)
+    }
+    else {
+        ll <- lapply(as.list(dim), function(n) seq(from=1, to=n))
+        elements <- expand.grid(ll)
+        elt.names <- apply(elements, 1, paste, collapse=",")
+        elt.names <- paste0(basename, "[", elt.names, "]")
+        return(elt.names)
     }
 }
 
@@ -63,7 +77,7 @@ as.mcmc.list.mcarray <- function(x, ...)
     if (length(which.iter) != 1) {
         stop("Bad iteration dimension in mcarray")
     }
-    
+
     which.chain <- which(dn=="chain")
     if (length(which.chain) > 1) {
         stop("Bad chain dimension in mcarray")
@@ -72,24 +86,35 @@ as.mcmc.list.mcarray <- function(x, ...)
     niter <- xdim[which.iter]
     if (length(which.chain) == 0) {
         perm <- c((1:ndim)[-which.iter], which.iter)
-        x <- matrix(aperm(x, perm), nrow=niter, byrow=TRUE)
-        ans <- mcmc.list(mcmc(x))
+        y <- matrix(aperm(x, perm), nrow=niter, byrow=TRUE)
+        ans <- mcmc.list(mcmc(y))
     }
     else {
         nchain <- xdim[which.chain]
         ans <- vector("list",nchain)
         len <- prod(xdim[-which.chain])
         perm <- c((1:ndim)[-c(which.iter,which.chain)], which.iter, which.chain)
-        x <- aperm(x,perm)
+        y <- aperm(x,perm)
         for (i in 1:nchain) {
-            ans[[i]] <- mcmc(matrix(x[1:len + (i-1)*len], nrow=niter,
+            ans[[i]] <- mcmc(matrix(y[1:len + (i-1)*len], nrow=niter,
                                     byrow=TRUE))
         }
         ans <- mcmc.list(ans)
     }
+
+    bugs.name <- attr(x, "varname", exact=TRUE)
+    if (!is.null(bugs.name)) {
+        elt.names <-  make.coda.names(bugs.name,
+                                      xdim[-c(which.iter, which.chain)])
+        ### Work around bug in coda::varnames<-
+        for (i in 1:nchain) {
+            colnames(ans[[i]]) <-elt.names
+        }
+    }
+
     return(ans)
 }
 
-    
-   
+
+
 

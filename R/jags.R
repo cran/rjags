@@ -39,7 +39,7 @@ print.jags <- function(x, ...)
   }
 }
 
-jags.model <- function(file, data=sys.frame(sys.parent()), inits,
+jags.model <- function(file, data=NULL, inits,
                        n.chains = 1, n.adapt=1000, quiet=FALSE)
 {
     if (missing(file)) {
@@ -54,8 +54,8 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
       }
       close(con)
       ## Need this for print method and for recompile function
-      model.code <- readLines(file, warn=FALSE)  
-    } 
+      model.code <- readLines(file, warn=FALSE)
+    }
     else if (inherits(file, "connection")) {
         modfile <- tempfile()
         ## JAGS library requires a physical file, so we need to copy
@@ -66,7 +66,7 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
     else {
         stop("'file' must be a character string or connection")
     }
-    
+
     if (quiet) {
         .quiet.messages(TRUE)
         on.exit(.quiet.messages(FALSE), add=TRUE)
@@ -77,9 +77,12 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
     if (!is.character(file)) {
         unlink(modfile) #Remove temporary copy
     }
-    
+
     varnames <- .Call("get_variable_names", p, PACKAGE="rjags")
-    if (is.environment(data)) {
+    if (missing(data) || is.null(data)) {
+        data <- list()
+    }
+    else if (is.environment(data)) {
         ##Get a list of numeric objects from the supplied environment
         data <- mget(varnames, envir=data, mode="numeric",
                      ifnotfound=list(NULL))
@@ -116,9 +119,6 @@ jags.model <- function(file, data=sys.frame(sys.parent()), inits,
                      names(data)[df[i]])
             }
         }
-    }
-    else if (is.null(data)) {
-        data <- list()
     }
     else {
         stop("data must be a list or environment")
@@ -401,6 +401,7 @@ jags.samples <-
     ans <- .Call("get_monitored_values", model$ptr(), type, PACKAGE="rjags")
     for (i in seq(along=ans)) {
         class(ans[[i]]) <- "mcarray"
+        attr(ans[[i]], "varname") <- names(ans)[i]
     }
     for (i in seq(along=variable.names)) {
         if (status[i]) {
@@ -485,7 +486,8 @@ nchain <- function(model)
     .Call("get_nchain", model$ptr(), PACKAGE="rjags")
 }
 
-coda.samples <- function(model, variable.names=NULL, n.iter, thin=1, ...)
+coda.samples <- function(model, variable.names=NULL, n.iter, thin=1,
+                         na.rm = TRUE, ...)
 {
     start <- model$iter() + thin
     out <- jags.samples(model, variable.names, n.iter, thin, type="trace", ...)
@@ -520,6 +522,20 @@ coda.samples <- function(model, variable.names=NULL, n.iter, thin=1, ...)
         colnames(ans.ch) <- vnames.ch
         ans[[ch]] <- mcmc(ans.ch, start=start, thin=thin)
     }
+
+    if (isTRUE(na.rm)) {
+        ## Drop variables that are missing for all iterations in at least
+        ## one chain
+        all.missing <- sapply(ans, function(x) {apply(is.na(x), 2, any)})
+        drop.vars <- if (is.matrix(all.missing)) {
+            apply(all.missing, 1, any)
+        }
+        else {
+            any(all.missing)
+        }
+        ans <- lapply(ans, function(x) return(x[, !drop.vars, drop=FALSE]))
+    }
+
     mcmc.list(ans)
 }
 

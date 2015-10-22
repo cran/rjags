@@ -11,7 +11,7 @@ adapt(object, n.iter, end.adaptation=FALSE, \ldots)
   \item{object}{a \code{jags} model object}
   \item{n.iter}{length of the adaptive phase}
   \item{end.adaptation}{logical flag. If \code{TRUE} then adaptive
-    mode will be automatically on exit.}
+    mode will be turned off on exit.}
   \item{\ldots}{additional arguments to the update method}
 }
 \value{
@@ -38,9 +38,9 @@ adapt(object, n.iter, end.adaptation=FALSE, \ldots)
   any sampler reports failure of this test then \code{adapt} returns
   \code{FALSE}.
 
-  By default, the \code{adapt()} function turns off adaptive mode on
-  exit.  Further calls to \code{adapt()} do nothing. The model may be
-  maintained in adaptive mode with the option \code{end.adaptation =
+  If \code{end.adaptation = TRUE}, then adaptive mode is turned off on
+  exit, and further calls to \code{adapt()} do nothing. The model may be
+  maintained in adaptive mode with the default option \code{end.adaptation =
   FALSE} so that successive calls to \code{adapt()} may be made until
   adaptation is satisfactory.
 

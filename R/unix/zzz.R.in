@@ -4,9 +4,8 @@
     library.dynam("rjags", pkg, lib, local=FALSE)
 
     ## Set the module directory
-    moddir <- "@JAGS_MODULES@"
     if (is.null(getOption("jags.moddir"))) {
-        options("jags.moddir" = moddir)
+        options("jags.moddir" = "@JAGS_MODDIR@")
     }
     load.module("basemod", quiet=TRUE)
     load.module("bugs", quiet=TRUE)

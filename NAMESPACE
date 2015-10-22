@@ -1,11 +1,12 @@
-if(tools:::.OStype() == "windows") {
+if(.Platform$OS.type == "windows") {
     importFrom(utils, readRegistry, winProgressBar, setWinProgressBar,
-               file_test, packageVersion)
+               packageVersion, file_test)
 }
 importFrom(utils, txtProgressBar, setTxtProgressBar)
 importFrom(stats, variable.names, sd, update)
-importFrom(coda, as.mcmc.list, as.mcmc, mcmc.list, mcmc, spectrum0)
-export ( 
+importFrom(coda, as.mcmc.list, as.mcmc, mcmc.list, mcmc, spectrum0,
+           "varnames<-")
+export (
   jags.model,
   jags.samples,
   coda.samples,

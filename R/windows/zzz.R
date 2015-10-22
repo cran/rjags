@@ -53,7 +53,7 @@
   paste("Failed to locate any version of JAGS version ", major, "\n\n",
         "The rjags package is just an interface to the JAGS library\n",
         "Make sure you have installed JAGS-", major,
-        ".0.0.exe or higher from\n",
+        ".x.y.exe (for any x >=0, y>=0) from\n",
         "http://www.sourceforge.net/projects/mcmc-jags/files\n", sep="")
 }
 
@@ -77,7 +77,6 @@
         ## Search the registry. We need to look for both machine-wide and
         ## user-specific installations
 
-      jags.major <- 3
         key1 <- .findJAGS("HLM", jags.major)
         key2 <- .findJAGS("HCU", jags.major)
 

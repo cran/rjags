@@ -76,7 +76,8 @@ update.jags <- function(object, n.iter = 1, by, progress.bar, ...)
 adapt <- function(object, n.iter, end.adaptation = FALSE, ...)
 {
     if(.Call("is_adapting", object$ptr(), PACKAGE="rjags")) {
-        update.jags(object, n.iter, ...)
+        if(n.iter > 0)
+			update.jags(object, n.iter, ...)
         ok <- .Call("check_adaptation", object$ptr(), PACKAGE="rjags")
         if (end.adaptation) {
             .Call("adapt_off", object$ptr(), PACKAGE="rjags")
