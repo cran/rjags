@@ -2282,7 +2282,7 @@ $as_echo X"$jags_bin_path" |
 	  }
 	  s/.*/./; q'`
    else
-       as_fn_error $? "\"automatic detection of JAGS failed. Please supply the prefix for JAGS with the --with-jags-prefix option. See the README file for details.\"" "$LINENO" 5
+       as_fn_error $? "\"automatic detection of JAGS failed. Please use pkg-config to locate the JAGS library. See the INSTALL file for details.\"" "$LINENO" 5
        fi
    fi
 fi
@@ -3221,7 +3221,7 @@ ac_fn_cxx_check_header_mongrel "$LINENO" "Console.h" "ac_cv_header_Console_h" "$
 if test "x$ac_cv_header_Console_h" = xyes; then :
 
 else
-  as_fn_error $? "\"cannot find header file ${JAGS_PKGINCLUDEDIR}/Console.h. See the README file for help.\"" "$LINENO" 5
+  as_fn_error $? "\"cannot find header file ${JAGS_PKGINCLUDEDIR}/Console.h. Please use pkg-config to locate the JAGS library. See the INSTALL file for details.\"" "$LINENO" 5
 fi
 
 
@@ -3273,7 +3273,20 @@ $as_echo "$as_me: Compile flags are $JAGS_CFLAGS" >&6;}
 $as_echo "$as_me: Link flags are $JAGS_LIBS" >&6;}
 
 fi
-####################### END manual configuration ##########################
+####################### END legacy configuration ##########################
+
+# Support for private installations of JAGS. If the jags library is not
+# on the linker path then it helps to hard-code the location of JAGS into
+# the DSO for rjags. Suggested by Doug Bates, April 2011.
+
+# Check whether --enable-rpath was given.
+if test "${enable_rpath+set}" = set; then :
+  enableval=$enable_rpath;
+fi
+
+if test  "x$enable_rpath" = "xyes"; then
+   JAGS_RPATH="-Wl,-rpath ${JAGS_LIBDIR}"
+fi
 
 # Sanity checks.
 OLDFLAGS=${LDFLAGS}
@@ -3285,7 +3298,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 CFLAGS=${JAGS_CFLAGS}
-# Can we load the library?
+# Can we link to the library?
 LDFLAGS="-L${JAGS_LIBDIR}"
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -3871,7 +3884,7 @@ _ACEOF
   LIBS="-ljags $LIBS"
 
 else
-  as_fn_error $? "\"cannot load JAGS library in ${JAGS_LIBDIR}. See the README file for help.\"" "$LINENO" 5
+  as_fn_error $? "\"cannot link to JAGS library in ${JAGS_LIBDIR}.\"" "$LINENO" 5
 fi
 
 ac_ext=c
@@ -3890,9 +3903,34 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 OCXXFLAGS=${CXXFLAGS}
 CXXFLAGS=${JAGS_CFLAGS}
-LDFLAGS=${JAGS_LIBS}
+LDFLAGS="${JAGS_LIBS} ${JAGS_RPATH}"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking version of JAGS library" >&5
 $as_echo_n "checking version of JAGS library... " >&6; }
+# Need to run this trivial test program first to detect runtime linkage problems
+if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+      #include <version.h>
+      int main() { return 0; }
+_ACEOF
+if ac_fn_cxx_try_run "$LINENO"; then :
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: link error" >&5
+$as_echo "link error" >&6; }
+    as_fn_error $? "Runtime link error: See the INSTALL file for help" "$LINENO" 5
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+# Now we can test
 if test "$cross_compiling" = yes; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
@@ -3929,19 +3967,6 @@ CXXFLAGS=${OCXXFLAGS}
 # Set location of modules
 
 JAGS_MODDIR=${JAGS_LIBDIR}/JAGS/modules-${PACKAGE_VERSION}
-
-# Support for private installations of JAGS. If the jags library is not
-# on the linker path then it helps to hard-code the location of JAGS into
-# the DSO for rjags. Suggested by Doug Bates, April 2011.
-
-# Check whether --enable-rpath was given.
-if test "${enable_rpath+set}" = set; then :
-  enableval=$enable_rpath;
-fi
-
-if test  "x$enable_rpath" = "xyes"; then
-   JAGS_RPATH="-Wl,-rpath ${JAGS_LIBDIR}"
-fi
 
 
 
