@@ -1,6 +1,6 @@
 /*
  *  R package rjags file src/jags.cc 
- *  Copyright (C) 2006-2013 Martyn Plummer
+ *  Copyright (C) 2006-2016 Martyn Plummer
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <vector>
 #include <stdexcept>
+#include <cstdio>
 
 #include <Console.h>
 #include <version.h>
@@ -34,6 +35,9 @@ using std::map;
 using std::pair;
 using std::vector;
 using std::copy;
+using std::fopen;
+using std::fclose;
+using std::FILE;
 
 using jags::SArray;
 using jags::Console;
