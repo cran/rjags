@@ -65,11 +65,13 @@ static unsigned int sarray_len(SArray const &s)
 
 std::ostringstream jags_out; //Output stream
 std::ostringstream jags_err; //Error stream
-static SEXP JAGS_console_tag; //Run-time type checking for external pointer
+
 static bool quiet=false; //Suppress information messages
 
 static void checkConsole (SEXP s)
-{				  
+{
+    static SEXP JAGS_console_tag = install("JAGS_CONSOLE_TAG");
+    
     if (TYPEOF(s) != EXTPTRSXP || R_ExternalPtrTag(s) != JAGS_console_tag)
     {
         error("bad JAGS console pointer");
@@ -214,7 +216,7 @@ static SimpleRange makeRange(SEXP lower, SEXP upper)
     try {
 	r = SimpleRange(lvec, uvec);
     }
-    catch (std::logic_error except) {                                   
+    catch (std::logic_error const &except) {                                   
 	error("Invalid range");
     }
     return r;
@@ -358,11 +360,6 @@ extern "C" {
 	quiet = boolArg(s);
     }
 
-    void R_init_rjags(DllInfo *info)
-    {
-	JAGS_console_tag = install("JAGS_CONSOLE_TAG");	
-    }
-
     void R_unload_rjags(DllInfo *info)
     {
 	//FIXME: Need to zero console pointers
@@ -392,7 +389,8 @@ extern "C" {
     SEXP make_console()
     {
 	void *p = static_cast<void*>(new Console(jags_out, jags_err));
-	SEXP ptr = R_MakeExternalPtr(p, JAGS_console_tag, R_NilValue);
+	SEXP ptr = R_MakeExternalPtr(p, install("JAGS_CONSOLE_TAG"),
+				     R_NilValue);
 	R_RegisterCFinalizer(ptr, (R_CFinalizer_t) clear_console);
 	return ptr;
     }

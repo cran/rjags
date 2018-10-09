@@ -1,13 +1,14 @@
-0b3452301b7ee00338b3bc30b018b433 *DESCRIPTION
+ae60f3f23431d1d770678a310ff43cfd *DESCRIPTION
 e256cb2da52e175d0cc40289ff92e9c7 *INSTALL
-de66cc2266d358254b2aab3ae485b96d *NAMESPACE
+4a0633d785943d633ddd51bf6c12de42 *NAMESPACE
 5fcd1fe183901e91067edf32f69da754 *R/dic.R
-1c36106e8fdb63425fcac41d604ce2d9 *R/jags.R
+3adb43f6db3ea44f8282694663fdc9c8 *R/jags.R
 1ed51e4f1e0e39360c280ecdadfe0284 *R/jags.object.R
-fb121e03013181040bb43241fc7fde5e *R/mcarray.R
+1c6d7db13c317f78c870254ed110270b *R/mcarray.R
 77c07ef7017558fbf12288dd45a742b0 *R/read.data.R
 a4bb7181ba06fab0cdd88b07ef471b8b *R/unix/progress.bar.R
 68045d38e4ecad47ce33d8b1cf2e17a0 *R/unix/zzz.R.in
+c35b981ed48c2f46a6ac2a7c9b8a93c2 *R/utilities.R
 921d90c18a3aac1ff6ce243e187a0fae *R/windows/progress.bar.R
 dcd59bf5f902704c278ff26d1b79ddb1 *R/windows/zzz.R
 857c748215feff397d05cdaf65e7f6c2 *cleanup
@@ -23,7 +24,8 @@ e295c53351091ac56d81803c2e087938 *man/adapt.Rd
 5e0b4a154ed2f8087a8e5836ff8476c9 *man/jags.model.Rd
 acc639648f722ef4a740a87a6e97d3c6 *man/jags.module.Rd
 1452d48e130bbd652b8dacb166647091 *man/jags.object.Rd
-5c427dd5774bb2cf5c3e9511d3cea57d *man/jags.samples.Rd
+bb0dee0dfa8a0a68fa61ecb698efb08a *man/jags.samples.Rd
+810869b8208b379d39604f79bd5487df *man/jags.version.Rd
 0e6f792e3882b9c359ce6addec9b6031 *man/line.Rd
 221b944e4a73614658a0344f5b663619 *man/mcarray.object.Rd
 e1d4581b80556b14c34f61b804629b93 *man/parallel.Rd
@@ -33,5 +35,6 @@ fc82322b1e9e147f33cfb2b214975009 *man/read.jagsdata.Rd
 696040753b8b498dbb9a68b0436b8e9c *man/update.Rd
 9e833b0dd9f06c7464486c908b71eda5 *src/Makevars.in
 aa71142021fe413b879ad36bf926e399 *src/Makevars.win
-191c72e02425466da05464f6313efd41 *src/jags.cc
+1c4b24c3e6ec2f362675cc86a7d7b1f0 *src/init.c
+7fa4b8abcca0908fcfe9c3d32811f7f2 *src/jags.cc
 934cc6b1e926cfce7dc12e0c597b91f6 *src/parallel.cc

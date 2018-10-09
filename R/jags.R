@@ -380,7 +380,7 @@ parse.varnames <- function(varnames)
 
 
 jags.samples <-
-  function(model, variable.names, n.iter, thin=1, type="trace", ...)
+  function(model, variable.names, n.iter, thin=1, type="trace", force.list=FALSE, ...)
 {
     if (class(model) != "jags")
       stop("Invalid JAGS model")
@@ -390,26 +390,73 @@ jags.samples <-
 
     if (!is.numeric(n.iter) || length(n.iter) != 1 || n.iter <= 0)
       stop("n.iter must be a positive integer")
-    if (!is.character(type))
+    if (!is.numeric(thin) || length(thin) != 1 || thin <= 0)
+      stop("thin must be a positive integer")
+    if (!is.character(type) || length(type) == 0)
       stop("type must be a character vector")
 
-    pn <- parse.varnames(variable.names)
-    status <- .Call("set_monitors", model$ptr(), pn$names, pn$lower, pn$upper,
-                    as.integer(thin), type, PACKAGE="rjags")
-    if (!any(status)) stop("No valid monitors set")
+    ####  Allow vectorisation of type argument and variable.names argument
+    if(length(type)==1){
+      type <- rep(type, length(variable.names))
+    }else if(length(variable.names)==1){
+      variable.names <- rep(variable.names, length(type))
+    }
+    if(length(type)!=length(variable.names))
+      stop("non matching lengths of monitor type and variable.names")
+	
+    ####  Set monitors must be called for each relevant monitor type
+    status <- lapply(unique(type), function(t){
+        pn <- parse.varnames(variable.names[type==t])
+        status <- .Call("set_monitors", model$ptr(), pn$names, pn$lower, pn$upper,
+            as.integer(thin), t, PACKAGE="rjags")
+    })
+    names(status) <- unique(type)
+    if (!any(unlist(status))) stop("No valid monitors set")
+
+	startiter <- model$iter()
+	n.iter <- n.iter - n.iter%%thin
+    
     update.jags(model, n.iter, ...)
-    ans <- .Call("get_monitored_values", model$ptr(), type, PACKAGE="rjags")
-    for (i in seq(along=ans)) {
-        class(ans[[i]]) <- "mcarray"
-        attr(ans[[i]], "varname") <- names(ans)[i]
-    }
-    for (i in seq(along=variable.names)) {
-        if (status[i]) {
-            .Call("clear_monitor", model$ptr(), pn$names[i], pn$lower[[i]],
-                  pn$upper[[i]], type, PACKAGE="rjags")
+
+    ####  Retrieve values for each monitor type being used
+    usingtypes <- unique(type)[sapply(unique(type), function(t) return(any(status[[t]])))]
+    allans <- lapply(usingtypes, function(t){
+        ans <- .Call("get_monitored_values", model$ptr(), t, PACKAGE="rjags")
+        for (i in seq(along=ans)) {
+	        class(ans[[i]]) <- "mcarray"
+			attr(ans[[i]], "varname") <- names(ans)[i]
+			
+			# Assure there is a valid dim attribute for pooled scalar nodes:
+			if(is.null(dim(ans[[i]]))){
+				dim(ans[[i]]) <- length(ans[[i]])
+			}			
+
+			# New attributes for rjags_4-7:
+	        attr(ans[[i]], "type") <- t
+	        attr(ans[[i]], "iterations") <- c(start=startiter+thin, end=startiter+n.iter, thin=thin)
         }
-    }
-    return(ans)
+        pn <- parse.varnames(variable.names[type==t])
+        for (i in seq(along=variable.names[type==t])) {
+            if (status[[t]][i]) {
+                .Call("clear_monitor", model$ptr(), pn$names[i], pn$lower[[i]],
+                      pn$upper[[i]], t, PACKAGE="rjags")
+            }
+        }
+        return(ans)
+    })
+
+    ####  The return value is a named list of monitor types
+    names(allans) <- usingtypes
+	
+	####  Remove any that are empty:
+	allans <- allans[sapply(allans, length) > 0]
+	
+    ####  And if all monitors are of the same type and !force.list then return 
+    ####  just a single element for back compatibility with rjags < 4-7
+    if(!force.list && length(usingtypes)==1)
+      allans <- allans[[1]]
+
+    return(allans)
 }
 
 list.samplers <- function(object)
