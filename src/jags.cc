@@ -414,7 +414,7 @@ extern "C" {
 	}
     }
 
-    SEXP compile(SEXP ptr, SEXP data, SEXP nchain, SEXP gendata)
+    SEXP compileR(SEXP ptr, SEXP data, SEXP nchain, SEXP gendata)
     {
 	if (!isNumeric(nchain)) {
 	    error("nchain must be numeric");

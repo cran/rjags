@@ -13,7 +13,7 @@ extern SEXP check_adaptation(SEXP);
 extern SEXP check_model(SEXP, SEXP);
 extern SEXP clear_console(SEXP);
 extern SEXP clear_monitor(SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP compile(SEXP, SEXP, SEXP, SEXP);
+extern SEXP compileR(SEXP, SEXP, SEXP, SEXP);
 extern SEXP get_data(SEXP);
 extern SEXP get_factories(SEXP);
 extern SEXP get_iter(SEXP);
@@ -45,7 +45,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"check_model",               (DL_FUNC) &check_model,               2},
     {"clear_console",             (DL_FUNC) &clear_console,             1},
     {"clear_monitor",             (DL_FUNC) &clear_monitor,             5},
-    {"compile",                   (DL_FUNC) &compile,                   4},
+    {"compile",                   (DL_FUNC) &compileR,                   4},
     {"get_data",                  (DL_FUNC) &get_data,                  1},
     {"get_factories",             (DL_FUNC) &get_factories,             1},
     {"get_iter",                  (DL_FUNC) &get_iter,                  1},

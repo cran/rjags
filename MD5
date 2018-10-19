@@ -1,4 +1,4 @@
-ae60f3f23431d1d770678a310ff43cfd *DESCRIPTION
+84c4873a817426e52a22567a7b25fdf3 *DESCRIPTION
 e256cb2da52e175d0cc40289ff92e9c7 *INSTALL
 4a0633d785943d633ddd51bf6c12de42 *NAMESPACE
 5fcd1fe183901e91067edf32f69da754 *R/dic.R
@@ -35,6 +35,6 @@ fc82322b1e9e147f33cfb2b214975009 *man/read.jagsdata.Rd
 696040753b8b498dbb9a68b0436b8e9c *man/update.Rd
 9e833b0dd9f06c7464486c908b71eda5 *src/Makevars.in
 aa71142021fe413b879ad36bf926e399 *src/Makevars.win
-1c4b24c3e6ec2f362675cc86a7d7b1f0 *src/init.c
-7fa4b8abcca0908fcfe9c3d32811f7f2 *src/jags.cc
+403495c2bccab34f856be6a3de39db4f *src/init.c
+65094719f0a2b4548e7e505e35bdde63 *src/jags.cc
 934cc6b1e926cfce7dc12e0c597b91f6 *src/parallel.cc
