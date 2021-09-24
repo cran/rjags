@@ -27,7 +27,7 @@
     ## JAGS-major.x.y, or NULL if no release is found
   
     regkey <- try(readRegistry("SOFTWARE\\JAGS", hive = hive, maxdepth = 2,
-                               view="32-bit"), silent = TRUE)
+                               view="64-bit"), silent = TRUE)
     if (inherits(regkey, "try-error")) {
         return(NULL)
     }

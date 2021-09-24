@@ -1,4 +1,4 @@
-AC_INIT([rjags], [4])
+AC_INIT([rjags],[4])
 
 if test -z "${R_HOME}"; then
    AC_MSG_ERROR("R_HOME is not defined")
@@ -54,8 +54,7 @@ AC_MSG_NOTICE([Attempting legacy configuration of rjags])
 # executable.
 
 AC_ARG_WITH([jags-prefix],
-            AC_HELP_STRING([--with-jags-prefix=PREFIX_PATH],
-                           [Prefix used when JAGS was installed]),
+            AS_HELP_STRING([--with-jags-prefix=PREFIX_PATH],[Prefix used when JAGS was installed]),
             [jags_prefix_path=$withval], [jags_prefix_path=""])
 if test [ -n "$jags_prefix_path" ] ; then
    JAGS_PREFIX=${jags_prefix_path}
@@ -76,8 +75,7 @@ fi
 # JAGS_PREFIX.
 
 AC_ARG_WITH([jags-includedir],
-            AC_HELP_STRING([--with-jags-includedir=INCLUDE_PATH],
-                           [the value of includedir used when JAGS was installed]),
+            AS_HELP_STRING([--with-jags-includedir=INCLUDE_PATH],[the value of includedir used when JAGS was installed]),
             [jags_include_path=$withval], [jags_include_path=""])
 if test [ -n "$jags_include_path" ] ; then
    JAGS_INCLUDEDIR=${jags_include_path}
@@ -115,8 +113,7 @@ fi
 # JAGS_PREFIX and LIBnn.
 
 AC_ARG_WITH([jags-libdir],
-            AC_HELP_STRING([--with-jags-libdir=LIB_PATH],
-                           [the value of libdir used when JAGS was installed]),
+            AS_HELP_STRING([--with-jags-libdir=LIB_PATH],[the value of libdir used when JAGS was installed]),
             [jags_lib_path=$withval])
 if test [ -n "$jags_lib_path" ] ; then
    JAGS_LIBDIR=$jags_lib_path
@@ -139,8 +136,7 @@ fi
 # the DSO for rjags. Suggested by Doug Bates, April 2011.
 
 AC_ARG_ENABLE([rpath],
-            AC_HELP_STRING([--enable-rpath],
-                           [Hard link the location of the JAGS library]))
+            AS_HELP_STRING([--enable-rpath],[Hard link the location of the JAGS library]))
 if test [ "x$enable_rpath" = "xyes"]; then
    JAGS_RPATH="-Wl,-rpath ${JAGS_LIBDIR}"
 fi
@@ -191,5 +187,7 @@ AC_SUBST(JAGS_CFLAGS)
 AC_SUBST(JAGS_MODDIR)
 AC_SUBST(JAGS_RPATH)
 
-AC_OUTPUT(src/Makevars)
-AC_OUTPUT(R/unix/zzz.R)
+AC_CONFIG_FILES([src/Makevars])
+AC_OUTPUT
+AC_CONFIG_FILES([R/unix/zzz.R])
+AC_OUTPUT

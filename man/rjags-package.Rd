@@ -19,10 +19,10 @@ Bayesian graphical models using MCMC
   Lunn et al (2009) for a history of the BUGS project.  Note that the
   rjags package does not include a copy of the JAGS library: you must
   install this separately. For instructions on downloading JAGS, see the
-  home page at \url{http://mcmc-jags.sourceforge.net}.
+  home page at \url{https://mcmc-jags.sourceforge.io}.
   
   To fully understand how JAGS works, you need to read the
-  \href{http://sourceforge.net/projects/mcmc-jags/files/Manuals/3.x/jags_user_manual.pdf}{JAGS
+  \href{https://sourceforge.net/projects/mcmc-jags/files/Manuals/4.x/jags_user_manual.pdf}{JAGS
     User Manual}.  The manual explains the basics of modelling with JAGS
   and shows the functions and distributions available in the dialect of
   the BUGS language used by JAGS. It also describes the command line

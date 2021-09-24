@@ -1,4 +1,4 @@
-4265e2cf9790b6c9d07c11946349e746 *DESCRIPTION
+26037002ac42cb7d69d406deb5daaf25 *DESCRIPTION
 e256cb2da52e175d0cc40289ff92e9c7 *INSTALL
 4a0633d785943d633ddd51bf6c12de42 *NAMESPACE
 5fcd1fe183901e91067edf32f69da754 *R/dic.R
@@ -10,10 +10,10 @@ a4bb7181ba06fab0cdd88b07ef471b8b *R/unix/progress.bar.R
 68045d38e4ecad47ce33d8b1cf2e17a0 *R/unix/zzz.R.in
 c35b981ed48c2f46a6ac2a7c9b8a93c2 *R/utilities.R
 921d90c18a3aac1ff6ce243e187a0fae *R/windows/progress.bar.R
-dcd59bf5f902704c278ff26d1b79ddb1 *R/windows/zzz.R
+868eefe647e930df4e9e13c3df6e74fb *R/windows/zzz.R
 857c748215feff397d05cdaf65e7f6c2 *cleanup
-87989973e91e5c5eeed4ac234b92979c *configure
-70aeb53e32969f93a8b9c20737a4ea32 *configure.ac
+1e91a4ae5290aff2f8aae82a4e7a858e *configure
+1d3354b170e333ed62e6b41cc341274a *configure.ac
 d41d8cd98f00b204e9800998ecf8427e *configure.win
 baf8a3492838ff4e0aa0b67b38bdd297 *data/LINE.RData
 e295c53351091ac56d81803c2e087938 *man/adapt.Rd
@@ -31,12 +31,12 @@ bb0dee0dfa8a0a68fa61ecb698efb08a *man/jags.samples.Rd
 e1d4581b80556b14c34f61b804629b93 *man/parallel.Rd
 fc82322b1e9e147f33cfb2b214975009 *man/read.jagsdata.Rd
 9d9b4c1924d2af1664ff825fa5418941 *man/rjags-deprecated.Rd
-2957a9323cff4aa7e32d53ae95341e41 *man/rjags-package.Rd
+672bce4d2eeb6c7e9a680fc4a2846b44 *man/rjags-package.Rd
 696040753b8b498dbb9a68b0436b8e9c *man/update.Rd
 9e833b0dd9f06c7464486c908b71eda5 *src/Makevars.in
+75899220b563d9c0d784b39f448ff909 *src/Makevars.ucrt
 6d55fd94cd65c25209f0475ce8e74f6b *src/Makevars.win
 e64e277efe5c0168846bc21e121d38b0 *src/init.c
 f6cbfb210ca85029a82063770c01ff94 *src/init.h
 b71a30fe5b10ef2975cf0261704af5c8 *src/jags.cc
-9496acf935e487b5c9aeeb23dc1ef46f *src/jags.cc.orig
 934cc6b1e926cfce7dc12e0c597b91f6 *src/parallel.cc

@@ -1,0 +1,3 @@
+JAGS_ROOT ?= "/c/progra~1/JAGS/JAGS-4.3.0"
+PKG_CPPFLAGS=-I"$(JAGS_ROOT)/include" 
+PKG_LIBS=-L"$(JAGS_ROOT)/${R_ARCH}/bin" -ljags-4
