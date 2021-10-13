@@ -2,12 +2,12 @@
 {
     ## Check that folder jags.home actually exists and contains the DLL
     ## in the appropriate sub-folder.
-    
+
     ## Registry entries created by the JAGS instsaller may be invalid
     ## if the user removes JAGS by manually deleting files rather than
     ## using the uninstaller. So this function is used to check that
     ## the installation still exists.
-    
+
     if (is.null(jags.home)) return(FALSE)
     if (!is.vector(jags.home, mode="character") || length(jags.home) != 1) {
         return(FALSE)
@@ -25,12 +25,20 @@
 {
     ## Returns the registry key corresponding to the latest release of
     ## JAGS-major.x.y, or NULL if no release is found
-  
+
+    ## JAGS installer records JAGS install directory in 32-bit
+    ## registry. This will switch to 64-bit registry after we drop
+    ## 32-bit support.  So check both (Fix for problem in rjags_4-11).
     regkey <- try(readRegistry("SOFTWARE\\JAGS", hive = hive, maxdepth = 2,
                                view="64-bit"), silent = TRUE)
     if (inherits(regkey, "try-error")) {
+        regkey <- try(readRegistry("SOFTWARE\\JAGS", hive = hive, maxdepth = 2,
+                                   view="32-bit"), silent = TRUE)
+    }
+    if (inherits(regkey, "try-error")) {
         return(NULL)
     }
+
     keynames <- names(regkey)
     keynames <- keynames[grep(paste0("^JAGS-", major, "\\."), keynames)]
     if (length(keynames) == 0) {
@@ -97,7 +105,7 @@
 
         jags.home <- latest[[1]][["InstallDir"]]
     }
-    
+
 ### Add the JAGS bin to the windows PATH, if not already present
 
     path <- Sys.getenv("PATH")
@@ -115,7 +123,7 @@
     library.dynam("rjags", pkg, lib)
 
 ### Set the module directory, if the option jags.moddir is not already set
-    
+
     if (is.null(getOption("jags.moddir"))) {
         options("jags.moddir" = file.path(jags.home, .Platform$r_arch,
                 "modules"))
@@ -132,7 +140,7 @@
     load.module("bugs", quiet=TRUE)
 
 ### Set progress bar type
-    
+
     if (is.null(getOption("jags.pb"))) {
         options("jags.pb"="text")
     }

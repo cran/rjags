@@ -1,4 +1,4 @@
-26037002ac42cb7d69d406deb5daaf25 *DESCRIPTION
+23fe1ec5eed083ab02ed96204aad8425 *DESCRIPTION
 e256cb2da52e175d0cc40289ff92e9c7 *INSTALL
 4a0633d785943d633ddd51bf6c12de42 *NAMESPACE
 5fcd1fe183901e91067edf32f69da754 *R/dic.R
@@ -10,7 +10,7 @@ a4bb7181ba06fab0cdd88b07ef471b8b *R/unix/progress.bar.R
 68045d38e4ecad47ce33d8b1cf2e17a0 *R/unix/zzz.R.in
 c35b981ed48c2f46a6ac2a7c9b8a93c2 *R/utilities.R
 921d90c18a3aac1ff6ce243e187a0fae *R/windows/progress.bar.R
-868eefe647e930df4e9e13c3df6e74fb *R/windows/zzz.R
+ed0a5d0dc5ca0914a885d3a98eca6def *R/windows/zzz.R
 857c748215feff397d05cdaf65e7f6c2 *cleanup
 1e91a4ae5290aff2f8aae82a4e7a858e *configure
 1d3354b170e333ed62e6b41cc341274a *configure.ac
