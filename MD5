@@ -1,4 +1,4 @@
-23fe1ec5eed083ab02ed96204aad8425 *DESCRIPTION
+d61e9551c076822c9f0b2b8c59042718 *DESCRIPTION
 e256cb2da52e175d0cc40289ff92e9c7 *INSTALL
 4a0633d785943d633ddd51bf6c12de42 *NAMESPACE
 5fcd1fe183901e91067edf32f69da754 *R/dic.R
@@ -31,10 +31,10 @@ bb0dee0dfa8a0a68fa61ecb698efb08a *man/jags.samples.Rd
 e1d4581b80556b14c34f61b804629b93 *man/parallel.Rd
 fc82322b1e9e147f33cfb2b214975009 *man/read.jagsdata.Rd
 9d9b4c1924d2af1664ff825fa5418941 *man/rjags-deprecated.Rd
-672bce4d2eeb6c7e9a680fc4a2846b44 *man/rjags-package.Rd
+be1e0eb378f9f0a4031978f0782dbce0 *man/rjags-package.Rd
 696040753b8b498dbb9a68b0436b8e9c *man/update.Rd
 9e833b0dd9f06c7464486c908b71eda5 *src/Makevars.in
-75899220b563d9c0d784b39f448ff909 *src/Makevars.ucrt
+61d0730f1bdd39d3aa61b53dad4a58e3 *src/Makevars.ucrt
 6d55fd94cd65c25209f0475ce8e74f6b *src/Makevars.win
 e64e277efe5c0168846bc21e121d38b0 *src/init.c
 f6cbfb210ca85029a82063770c01ff94 *src/init.h
