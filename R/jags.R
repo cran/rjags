@@ -382,7 +382,7 @@ parse.varnames <- function(varnames)
 jags.samples <-
   function(model, variable.names, n.iter, thin=1, type="trace", force.list=FALSE, ...)
 {
-    if (class(model) != "jags")
+    if (!inherits(model, "jags"))
       stop("Invalid JAGS model")
 
     if (!is.character(variable.names) || length(variable.names) == 0)

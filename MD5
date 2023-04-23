@@ -1,8 +1,8 @@
-d61e9551c076822c9f0b2b8c59042718 *DESCRIPTION
+dcfb8a78c324546e89c2ec3494cd1388 *DESCRIPTION
 e256cb2da52e175d0cc40289ff92e9c7 *INSTALL
 4a0633d785943d633ddd51bf6c12de42 *NAMESPACE
 5fcd1fe183901e91067edf32f69da754 *R/dic.R
-3adb43f6db3ea44f8282694663fdc9c8 *R/jags.R
+438b36d919f059a586a04e452729028a *R/jags.R
 1ed51e4f1e0e39360c280ecdadfe0284 *R/jags.object.R
 1c6d7db13c317f78c870254ed110270b *R/mcarray.R
 77c07ef7017558fbf12288dd45a742b0 *R/read.data.R
@@ -37,6 +37,6 @@ be1e0eb378f9f0a4031978f0782dbce0 *man/rjags-package.Rd
 61d0730f1bdd39d3aa61b53dad4a58e3 *src/Makevars.ucrt
 6d55fd94cd65c25209f0475ce8e74f6b *src/Makevars.win
 e64e277efe5c0168846bc21e121d38b0 *src/init.c
-f6cbfb210ca85029a82063770c01ff94 *src/init.h
+e225e6d1d7a6fbcb6766594e71397699 *src/init.h
 b71a30fe5b10ef2975cf0261704af5c8 *src/jags.cc
 934cc6b1e926cfce7dc12e0c597b91f6 *src/parallel.cc
