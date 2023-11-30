@@ -85,15 +85,13 @@ extern "C" {
 		    break;
 		}
 		else {
-		    string msg = string("RNG factory not active: ") + factory;
-		    error(msg.c_str());
+		    error("RNG factory not active: %s", factory.c_str());
 		}
 	    }
 	}
 	
 	if (rngvec.empty()) {
-	    string msg =  string("RNG factory not found: ") + factory;
-	    error(msg.c_str());
+	    error("RNG factory not found: %s", factory.c_str());
 	}
 
 	SEXP rng_list;

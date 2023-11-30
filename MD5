@@ -1,4 +1,4 @@
-dcfb8a78c324546e89c2ec3494cd1388 *DESCRIPTION
+9fe63d06093a9595e7f3657a3db556de *DESCRIPTION
 e256cb2da52e175d0cc40289ff92e9c7 *INSTALL
 4a0633d785943d633ddd51bf6c12de42 *NAMESPACE
 5fcd1fe183901e91067edf32f69da754 *R/dic.R
@@ -39,4 +39,4 @@ be1e0eb378f9f0a4031978f0782dbce0 *man/rjags-package.Rd
 e64e277efe5c0168846bc21e121d38b0 *src/init.c
 e225e6d1d7a6fbcb6766594e71397699 *src/init.h
 b71a30fe5b10ef2975cf0261704af5c8 *src/jags.cc
-934cc6b1e926cfce7dc12e0c597b91f6 *src/parallel.cc
+8a037074f5dd8cdcadb171c4ef8c71e3 *src/parallel.cc
