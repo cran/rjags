@@ -11,6 +11,7 @@ Contents:
 2 Unix/Linux: pkg-config
 3 Unix/Linux: runtime linkage
 4 Unix/Linux: legacy configuration
+5 Mac: `brew install jags`
 
 1 Windows
 ---------
@@ -204,3 +205,8 @@ session, using the configure.args argument:
 
 If configure arguments are set, they always override the corresponding
 environment variables.
+
+2 Mac (OS X): `brew install jags`
+------------------------
+
+You can use [homebrew](https://brew.sh/) to install [jags](https://formulae.brew.sh/formula/jags) via the command `brew install jags`. You can also download the file [directly from [sourceforge](https://sourceforge.net/projects/mcmc-jags/files/).
