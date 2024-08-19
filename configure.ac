@@ -165,7 +165,8 @@ AC_RUN_IFELSE(
       int main() { return 0; }])],
    [],
    [AC_MSG_RESULT([link error])
-    AC_MSG_ERROR([Runtime link error: See the INSTALL file for help])])
+    AC_MSG_ERROR([Runtime link error: See the INSTALL file for help])],
+   [AC_MSG_RESULT([skipped for cross-compiling])])
 # Now we can test
 AC_RUN_IFELSE(
    [AC_LANG_SOURCE([
@@ -173,7 +174,8 @@ AC_RUN_IFELSE(
       int main() { return JAGS_MAJOR == ${PACKAGE_VERSION} ? 0 : 1; }])],
    [AC_MSG_RESULT([OK])],
    [AC_MSG_RESULT([wrong version])
-    AC_MSG_ERROR([rjags requires JAGS version ${PACKAGE_VERSION}.x.y])])
+    AC_MSG_ERROR([rjags requires JAGS version ${PACKAGE_VERSION}.x.y])],
+   [AC_MSG_RESULT([skipped for cross-compiling])])
 AC_LANG_POP()
 LDFLAGS=${OLDFLAGS}
 CXXFLAGS=${OCXXFLAGS}
