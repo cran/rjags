@@ -1,4 +1,4 @@
-22637a8851d3abfdcfda17a5bdc771f4 *DESCRIPTION
+b971f4141a56f536e6fee3c91c75236d *DESCRIPTION
 e256cb2da52e175d0cc40289ff92e9c7 *INSTALL
 4a0633d785943d633ddd51bf6c12de42 *NAMESPACE
 5fcd1fe183901e91067edf32f69da754 *R/dic.R
@@ -12,8 +12,8 @@ c35b981ed48c2f46a6ac2a7c9b8a93c2 *R/utilities.R
 921d90c18a3aac1ff6ce243e187a0fae *R/windows/progress.bar.R
 ed0a5d0dc5ca0914a885d3a98eca6def *R/windows/zzz.R
 857c748215feff397d05cdaf65e7f6c2 *cleanup
-285bcbbb7096589837533be75eae84dd *configure
-4858211a0bf9d3430d5caf965d5d65d4 *configure.ac
+510973dea946b8c180052ecaa8cafb86 *configure
+81e56a7c652b4a03eead98cf728bd5dd *configure.ac
 d41d8cd98f00b204e9800998ecf8427e *configure.win
 baf8a3492838ff4e0aa0b67b38bdd297 *data/LINE.RData
 e295c53351091ac56d81803c2e087938 *man/adapt.Rd
