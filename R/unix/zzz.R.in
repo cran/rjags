@@ -1,14 +1,38 @@
 .onLoad <- function(lib, pkg)
 {
-    ## Load the rjags wrapper.
-    library.dynam("rjags", pkg, lib, local=FALSE)
+    jags.major <- packageVersion(pkg, lib)$major
+
+    ## Load the rjags wrapper with error info:
+    tryCatch ({
+      library.dynam("rjags", pkg, lib, local=FALSE)
+    }, error = function(e){
+      jags.root <- "@JAGS_ROOT@"
+      if (file.exists(file.path(jags.root, "bin", "jags"))) {
+        stop("An error occured while linking to the JAGS installation at\n\t", jags.root, "\n\tMake sure that you have a JAGS ", jags.major, ".x.y installation that is binary\n\tcompatible with your R installation (your current R platform is\n\t", R.Version()$platform, ").\n\n\tThe error returned from library.dynam(...) was:\n\t", conditionMessage(e), call.=FALSE)
+      } else {
+        stop("The expected JAGS installation was not found at\n\t", jags.root, "\n\tThe rjags package requires JAGS ", jags.major, ".x.y to be installed.\n\n\tThe error returned from library.dynam(...) was:\n\t", conditionMessage(e), call.=FALSE)
+      }
+    })
 
     ## Set the module directory
     if (is.null(getOption("jags.moddir"))) {
-        options("jags.moddir" = "@JAGS_MODDIR@")
+        .rjags_env$DEFAULT_MODDIR <- "@JAGS_MODDIR@"
+    } else {
+        .rjags_env$DEFAULT_MODDIR <- getOption("jags.moddir")
     }
-    load.module("basemod", quiet=TRUE)
-    load.module("bugs", quiet=TRUE)
+
+    ## Try to load the modules with error info:
+    tryCatch ({
+      load.module("basemod", quiet=TRUE)
+      load.module("bugs", quiet=TRUE)
+    }, error = function(e){
+      jags.moddir <- .rjags_env$DEFAULT_MODDIR
+      if (dir.exists(jags.moddir)) {
+        stop("An unexpected error occured while loading rjags modules at\n\t", jags.moddir, "\n\tIf you have recently reinstalled rjags then restart R and try again.\n\tOtherwise, make sure that your JAGS ", jags.major, ".x.y installation is binary\n\tcompatible with your R installation (your current R platform is\n\t", R.Version()$platform, ").\n\n\tThe error returned from load.module(...) was:\n\t", conditionMessage(e), call.=FALSE)
+      } else {
+        stop("The expected JAGS module directory was not found at\n\t", jags.moddir, "\n\tYour JAGS ", jags.major, ".x.y installation may need to be re-installed.\n\n\tThe error returned from load.module(...) was:\n\t", conditionMessage(e), call.=FALSE)
+      }
+    })
 
     ## Set progress bar type
     if (is.null(getOption("jags.pb"))) {
@@ -29,3 +53,17 @@
     library.dynam.unload("rjags", libpath)
 }
 
+### Helper function and package env for pkg.compile.flags
+.rjags_env <- new.env(parent = emptyenv())
+.rjags_env$DEFAULT_MODDIR <- character(0)
+
+get.compile.flags <- function(){
+  list(
+    "JAGS_VERSION" = jags.version(),
+    "RJAGS_VERSION" = packageVersion("rjags"),
+    "JAGS_ROOT" = .Call("get_jags_root", PACKAGE="rjags"),  # Equivalent to @JAGS_ROOT@
+    "CPPFLAGS" = .Call("get_rjags_cppflags", PACKAGE="rjags"),
+    "CXXFLAGS" = .Call("get_rjags_cxxflags", PACKAGE="rjags"),
+    "LIBS" = .Call("get_rjags_libs", PACKAGE="rjags")
+  )
+}

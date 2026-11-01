@@ -18,6 +18,10 @@
 
 # Get the version of JAGS to which we are currently linked:
 jags.version <- function(){
-	vers <- .Call("get_version", PACKAGE="rjags")	
-	return(package_version(vers))	
+    vers <- .Call("get_version", PACKAGE="rjags")
+    ## Remove potential build information:
+    vers <- sub(" (.*)$", "", vers)
+    ## Work around bug introduced by 5.0.0-beta as package name
+    vers <- sub("-beta$", "", vers)
+    return(package_version(vers))
 }

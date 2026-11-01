@@ -3,7 +3,7 @@
     ## Check that folder jags.home actually exists and contains the DLL
     ## in the appropriate sub-folder.
 
-    ## Registry entries created by the JAGS instsaller may be invalid
+    ## Registry entries created by the JAGS installer may be invalid
     ## if the user removes JAGS by manually deleting files rather than
     ## using the uninstaller. So this function is used to check that
     ## the installation still exists.
@@ -78,7 +78,7 @@
     if (nchar(jags.home) > 0) {
         if (!.check.jags.home(jags.home, jags.major)) {
             stop("The environment variable JAGS_HOME is set to\n", jags.home,
-                 "\nbut no JAGS installation can be found there\n")
+                 "\nbut no JAGS ", jags.major, ".x.y installation can be found there\n")
         }
     }
     else {
@@ -105,6 +105,9 @@
 
         jags.home <- latest[[1]][["InstallDir"]]
     }
+#### Save runtime JAGS home into package environment for later use
+    .rjags_env[["JAGS_ROOT"]] <- jags.home
+
 
 ### Add the JAGS bin to the windows PATH, if not already present
 
@@ -119,25 +122,36 @@
         }
     }
 
-### Load the rjags dll
-    library.dynam("rjags", pkg, lib)
+### Load the rjags dll with error info:
+    tryCatch ({
+      library.dynam("rjags", pkg, lib)
+    }, error = function(e){
+      stop("An unexpected error occured while linking to the JAGS installation at\n\t", jags.home, "\n\tMake sure that you have a JAGS ", jags.major, ".x.y installation that is binary\n\tcompatible with your R installation (your current R platform is\n\t", R.Version()$platform, ").\n\n\tThe error returned from library.dynam(...) was:\n\t", conditionMessage(e), call.=FALSE)
+    })
 
-### Set the module directory, if the option jags.moddir is not already set
-
+### Set the module directory
     if (is.null(getOption("jags.moddir"))) {
-        options("jags.moddir" = file.path(jags.home, .Platform$r_arch,
-                "modules"))
+      .rjags_env$DEFAULT_MODDIR <- file.path(jags.home, .Platform$r_arch,
+                                             "modules")
+    } else {
+      .rjags_env$DEFAULT_MODDIR <- getOption("jags.moddir")
     }
 
 ### Check that the module directory actually exists
-    moddir <- getOption("jags.moddir")
+    moddir <- .rjags_env$DEFAULT_MODDIR
     if (!file.exists(moddir)) {
         stop(moddir, " not found\n\n",
              "rjags is looking for the JAGS modules in\n", moddir,
              "\nbut this folder does not exist\n")
     }
-    load.module("basemod", quiet=TRUE)
-    load.module("bugs", quiet=TRUE)
+
+### Try to load the modules with error info:
+    tryCatch ({
+      load.module("basemod", quiet=TRUE)
+      load.module("bugs", quiet=TRUE)
+    }, error = function(e){
+      stop("An unexpected error occured while loading rjags modules at\n\t", moddir, "\n\tIf you have recently reinstalled rjags then restart R and try again.\n\tOtherwise, make sure that your JAGS ", jags.major, ".x.y installation is binary\n\tcompatible with your R installation (your current R platform is\n\t", R.Version()$platform, ").\n\n\tThe error returned from load.module(...) was:\n\t", conditionMessage(e), call.=FALSE)
+    })
 
 ### Set progress bar type
 
@@ -158,4 +172,23 @@
 .onUnload <- function(libpath)
 {
     library.dynam.unload("rjags", libpath)
+}
+
+
+### Helper function and package env for pkg.compile.flags
+.rjags_env <- new.env(parent = emptyenv())
+.rjags_env$JAGS_ROOT <- character(0)
+.rjags_env$DEFAULT_MODDIR <- character(0)
+
+get.compile.flags <- function(){
+  jags_root_compile <- .Call("get_jags_root", PACKAGE="rjags")
+  jags_root_runtime <- .rjags_env$JAGS_ROOT
+  list(
+    "JAGS_VERSION" = jags.version(),
+    "RJAGS_VERSION" = packageVersion("rjags"),
+    "JAGS_ROOT" = jags_root_runtime,
+    "CPPFLAGS" = gsub(jags_root_compile, jags_root_runtime, .Call("get_rjags_cppflags", PACKAGE="rjags"), fixed=TRUE),
+    "CXXFLAGS" = gsub(jags_root_compile, jags_root_runtime, .Call("get_rjags_cxxflags", PACKAGE="rjags"), fixed=TRUE),
+    "LIBS" = gsub(jags_root_compile, jags_root_runtime, .Call("get_rjags_libs", PACKAGE="rjags"), fixed=TRUE)
+  )
 }

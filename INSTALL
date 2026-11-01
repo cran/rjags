@@ -10,7 +10,7 @@ Contents:
 1 Windows
 2 Unix/Linux: pkg-config
 3 Unix/Linux: runtime linkage
-4 Unix/Linux: legacy configuration
+4 macOS
 
 1 Windows
 ---------
@@ -32,9 +32,9 @@ environment variable JAGS_HOME.
 2 Unix/Linux: pkg-config
 ------------------------
 
-If you have pkg-config installed then the configure script will use it
-to detect the JAGS library and set the compiler and linker flags for
-rjags. You can test this capability in a unix shell by typing
+The configure script uses pkg-config to detect the JAGS library and
+set the compiler and linker flags for rjags. You can test this
+capability in a unix shell by typing
 
 pkg-config --modversion jags
 
@@ -95,112 +95,15 @@ You may also consider:
    time. Thus it is best to set this in the file .bash_profile (or
    the equivalent file if you using another shell).
 
-4 Unix/Linux: legacy configuration
-----------------------------------
+4 macOS
+-----------------------------
 
-Legacy configuration is used whenever pkg-config is not installed or
-otherwise fails to detect the JAGS library. Legacy configuration is
-deprecated and will be removed in a future version. If you experience
-problems with installing rjags then it is strongly recommended that
-you try to get pkg-config working rather than use the options below.
-
-The configure script will try to guess the location of the JAGS
-library. It does this by querying the R and jags executables, so both
-of these need to be on your PATH for automatic detection to work
-properly.
-
-If you have installed JAGS in a non-standard place then you may need
-to supply hints to the configure script.  This can be done by 
-passing configure arguments or setting environment variables (see below).
-
-The options/environment variables correspond to options that were
-used when JAGS was installed. They are shown in the table below:
-
-JAGS configure  rjags configure        Environmnent     default
-option          option                 variable
---------------  ---------------        ------------     -------
---prefix        --with-jags-prefix     JAGS_PREFIX      /usr/local
---libdir        --with-jags-libdir     JAGS_LIBDIR      ${prefix}/${LIBnn}
---includedir    --with-jags-includedir JAGS_INCLUDEDIR  ${prefix}/include
-
-By default LIBnn is the value returned by `R CMD config LIBnn`.
-This can be overridden by setting the environment variable LIBnn.
-
-4.1 Setting the prefix
-----------------------
-
-By default, all JAGS files are installed in subdirectories of /usr/local.
-This is the prefix of the installation, and it can be changed to any
-value by supplying the --prefix argument when installing JAGS.
-
-- The jags script goes in ${prefix}/bin
-- The jags executable launched by the script goes in ${prefix}/libexec
-- The libraries go in ${prefix}/lib
-- The modules go in ${prefix}/lib/JAGS
-- The headers go in ${prefix}/include/JAGS
-
-Suppose that when you installed JAGS, you used the configure argument
-'--prefix=/opt' to install JAGS in the directory /opt instead of the
-default /usr/local.  If /opt/bin is on your PATH then the configure
-script should still automatically detect JAGS for you.  Otherwise, you
-need to supply the configure argument '--with-jags-prefix=/opt' when
-installing rjags.
-
-Alternatively you can set the environment variable JAGS_PREFIX
-before building rjags:
-
-export JAGS_PREFIX=/opt
-
-4.2 Setting the library directory
----------------------------------
-
-Suppose you are on a 64-bit system and installed the JAGS library in
-/usr/local/lib64 instead of the default /usr/local/lib.  If R_HOME is
-/usr/lib64/R then the configure script should automatically look in
-the right place for the JAGS library.  Otherwise, you need to supply
-the configure argument '--with-jags-libdir=/usr/local/lib64' when
-installing rjags.
-
-Alternatively you can set the environment variable JAGS_LIBDIR
-before building rjags:
-
-export JAGS_LIBDIR=/usr/local/lib64
-
-If the library directory is in the right prefix, but just has a
-different name (e.g. ${prefix}/lib64 or ${prefix}/lib32 instead of the
-default ${prefix}/lib), then you can just set the environment variable
-LIBnn.
-
-export LIBnn=lib64
-
-4.3 Setting the include directory
----------------------------------
-
-It is unlikely that you will need to set the include directory, as
-there is no good reason for changing the default. Nevertheless,
-this option is included for completeness.
-
-By default, the header files go into ${prefix}/include, in a
-sub-directory JAGS. If you have put this subdirectory somewhere other
-than ${prefix}/include by supplying the --includedir option to
-configure when you built JAGS, then the corresponding option for rjags
-is --with-jags-includedir.
-
-Alternatively, you may set the environment variable JAGS_INCLUDEDIR.
-
-
-4.4 Passing configure arguments
--------------------------------
-
-Configure options for rjags are passed via the --configure-args
-argument to R CMD INSTALL:
-
-  R CMD INSTALL --configure-args='--with-jags...'
-
-or, if you are using the install.packages() function from an R
-session, using the configure.args argument:
-
-  install.packages("rjags", configure.args="--with-jags...")
-
-If configure arguments are set, they always override the corresponding
-environment variables.
+Installation on macOS is similar to the case on Unix/Linux, although
+the process is streamlined for compatibility with the official macOS
+installer of JAGS. This allows rjags to be installed on macOS without
+the need for any additional dependencies (other than pkg-config) or
+setting any environmental variables (including PKG_CONFIG_PATH).
+It also allows for switching between installations of different
+major versions of rjags (e.g. between rjags_4-x and rjags_5-x)
+without needing to re-install JAGS, assuming that an official macOS
+binary of JAGS 4.x.y is present on your system.

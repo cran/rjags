@@ -403,7 +403,7 @@ jags.samples <-
     }
     if(length(type)!=length(variable.names))
       stop("non matching lengths of monitor type and variable.names")
-	
+
     ####  Set monitors must be called for each relevant monitor type
     status <- lapply(unique(type), function(t){
         pn <- parse.varnames(variable.names[type==t])
@@ -415,7 +415,7 @@ jags.samples <-
 
 	startiter <- model$iter()
 	n.iter <- n.iter - n.iter%%thin
-    
+
     update.jags(model, n.iter, ...)
 
     ####  Retrieve values for each monitor type being used
@@ -425,11 +425,11 @@ jags.samples <-
         for (i in seq(along=ans)) {
 	        class(ans[[i]]) <- "mcarray"
 			attr(ans[[i]], "varname") <- names(ans)[i]
-			
+
 			# Assure there is a valid dim attribute for pooled scalar nodes:
 			if(is.null(dim(ans[[i]]))){
 				dim(ans[[i]]) <- length(ans[[i]])
-			}			
+			}
 
 			# New attributes for rjags_4-7:
 	        attr(ans[[i]], "type") <- t
@@ -447,11 +447,11 @@ jags.samples <-
 
     ####  The return value is a named list of monitor types
     names(allans) <- usingtypes
-	
+
 	####  Remove any that are empty:
 	allans <- allans[sapply(allans, length) > 0]
-	
-    ####  And if all monitors are of the same type and !force.list then return 
+
+    ####  And if all monitors are of the same type and !force.list then return
     ####  just a single element for back compatibility with rjags < 4-7
     if(!force.list && length(usingtypes)==1)
       allans <- allans[[1]]
@@ -596,7 +596,11 @@ load.module <- function(name, path, quiet=FALSE)
     }
 
     if (missing(path)) {
-        path = getOption("jags.moddir")
+        if (is.null(getOption("jags.moddir"))) {
+          path <- .rjags_env$DEFAULT_MODDIR
+        } else {
+          path <- getOption("jags.moddir")
+        }
         if (is.null(path)) {
             stop("option jags.moddir is not set")
         }
@@ -637,7 +641,7 @@ unload.module <- function(name, quiet=FALSE)
         warning(paste("module", name, "not loaded"))
     }
     else if (!quiet) {
-        cat("Module", name, "unloaded\n", sep=" ")
+        message("module", name, "unloaded\n", sep=" ")
     }
     invisible()
 }

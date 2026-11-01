@@ -1,8 +1,8 @@
 if(.Platform$OS.type == "windows") {
     importFrom(utils, readRegistry, winProgressBar, setWinProgressBar,
-               packageVersion, file_test)
+               file_test)
 }
-importFrom(utils, txtProgressBar, setTxtProgressBar)
+importFrom(utils, txtProgressBar, setTxtProgressBar, packageVersion)
 importFrom(stats, variable.names, sd, update)
 importFrom(coda, as.mcmc.list, as.mcmc, mcmc.list, mcmc, spectrum0,
            nvar, "varnames<-")
@@ -23,7 +23,9 @@ export (
   read.jagsdata,
   read.bugsdata,
   parallel.seeds,
-  jags.version
+  jags.version,
+  pkg.compile.flags,
+  load.pkg.module
 )
 S3method(print, jags)
 S3method(coef, jags)
