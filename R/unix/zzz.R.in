@@ -25,6 +25,7 @@
     tryCatch ({
       load.module("basemod", quiet=TRUE)
       load.module("bugs", quiet=TRUE)
+      load.module("diag", quiet=TRUE)
     }, error = function(e){
       jags.moddir <- .rjags_env$DEFAULT_MODDIR
       if (dir.exists(jags.moddir)) {

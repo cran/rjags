@@ -16,49 +16,36 @@
 
 print.mcarray <- function(x, ...)
 {
-    if (is.null(dim(x))) {
+    if (!checkdimtags(x)) {
         NextMethod()
     }
-    print(summary(x, mean))
+    else {
+        cat("mcarray:",
+            sprintf("%s", attr(x, "stat")),
+            sprintf("%s", attr(x, "summary")), "\n\n")
+        
+        print(collapse(x, keep.tags="value", FUN=mean))
+
+        tags <- dimtags(x)
+        drop.dims <- tags %in% c("iteration","chain")
+        if (any(drop.dims)) {
+            cat("\nMarginalizing over:",
+                paste(tags[drop.dims], "(", dim(x)[drop.dims],")" ,
+                      sep="", collapse=", "),
+                "\n")
+        }
+        
+        invisible(x)
+    }
 }
 
 summary.mcarray <- function(object, FUN, ...)
 {
-	
-    if (is.null(dim(object))) {
+    if (!checkdimtags(object)) {
         NextMethod()
     }
-	
-	# In case it is already pooled over chains and iterations (no dimnames):
-	if(length(dim(object))==1 || is.null(names(dim(object))) 
-		|| !any(c("iteration","chain") %in% names(dim(object)))){
-	    dims <- dim(object)
-	    attributes(object) <- NULL
-	    dim(object) <- dims
-	    ans <- list("stat"=object,
-	                "drop.dims" = character(0))
-	    class(ans) <- "summary.mcarray"
-	    return(ans)
-	}
-	
-    dn <- names(dim(object))
-    drop.dims <- dn %in% c("iteration","chain")
-
-    ans <- list("stat"=apply(object, which(!drop.dims), FUN, ...),
-                "drop.dims" = dim(object)[drop.dims])
-    class(ans) <- "summary.mcarray"
-
-    return(ans)
-}
-
-print.summary.mcarray <- function(x, ...)
-{
-    cat("mcarray:\n")
-    print(x$stat,...)
-    if (length(x$drop.dims) > 0) {
-        cat("\nMarginalizing over:",
-            paste(paste(names(x$drop.dims), "(", x$drop.dims,")" , sep=""),
-                  collapse=","),"\n")
+    else {
+        collapse(object, keep.tags="value", FUN=FUN, ...)
     }
 }
 
@@ -76,65 +63,111 @@ make.coda.names <- function(basename, dim)
     }
 }
 
-as.mcmc.list.mcarray <- function(x, ...)
+checkdimtags <- function(x)
 {
-    if (is.null(dim(x)) || is.null(names(dim(x)))) {
-        NextMethod()
+    tags <- dimtags(x)
+    if (is.null(tags)) {
+        return (FALSE)
+    }
+    else if (!all(tags %in% c("value", "iteration", "chain"))) {
+        return (FALSE)
+    }
+    return(TRUE)
+}
+
+as.mcmc.list.mcarray <- function(x, na.rm=TRUE, ...)
+{
+    if (is.null(dim(x)) || !checkdimtags(x)) {
+        stop("Cannot convert object without dimtags")
     }
 
     xdim <- dim(x)
     ndim <- length(xdim)
-    dn <- names(xdim)
+    tags <- dimtags(x)
 
-    which.iter <- which(dn=="iteration")
-    if (length(which.iter) != 1) {
-        stop("Bad iteration dimension in mcarray")
+    mcp <- attr(x, "mcpar")
+    if (is.null(mcp)) {
+        start <- thin <- 1
+    }
+    else {
+        start <- mcp[1]
+        thin <- mcp[3]
+    }
+    
+    which.val <- which(tags == "value")
+
+    which.iter <- which(tags == "iteration")
+    if (length(which.iter) == 0) {
+        stop("mcarray has no iteration dimension")
+    }
+    if (length(which.iter) > 1) {
+        stop("Multiple iteration dimensions in mcarray")
     }
 
-    which.chain <- which(dn=="chain")
+    which.chain <- which(tags == "chain")
     if (length(which.chain) > 1) {
-        stop("Bad chain dimension in mcarray")
+        stop("Multiple chain dimensions in mcarray")
     }
 
     niter <- xdim[which.iter]
     if (length(which.chain) == 0) {
-        perm <- c((1:ndim)[-which.iter], which.iter)
+        perm <- c(which.val, which.iter)
         y <- matrix(aperm(x, perm), nrow=niter, byrow=TRUE)
-        ans <- mcmc.list(mcmc(y))
+        nvar <- ncol(y)
+        ans <- list(mcmc(y, start=start, thin=thin))
     }
     else {
         nchain <- xdim[which.chain]
-        ans <- vector("list",nchain)
+        ans <- vector("list", nchain)
         len <- prod(xdim[-which.chain])
-        perm <- c((1:ndim)[-c(which.iter,which.chain)], which.iter, which.chain)
+        nvar <- prod(xdim[which.val])
+        perm <- c(which.val, which.iter, which.chain)
         y <- aperm(x,perm)
+
         for (i in 1:nchain) {
-            ans[[i]] <- mcmc(matrix(y[1:len + (i-1)*len], nrow=niter,
-                                    byrow=TRUE))
+            ans[[i]] <- mcmc(matrix(y[1:len + (i-1)*len], nrow=niter, byrow=TRUE),
+                             start=start, thin=thin)
         }
-        ans <- mcmc.list(ans)
     }
-	
-	# If elementnames is set this takes precedence over varname (for eventual use with new monitor types in JAGS 5):
-	elt.names <- NULL
-	if(!is.null(attr(x, 'elementnames', exact=TRUE))){
-		elt.names <- attr(x, 'elementnames')
-		if(length(elt.names) != nvar(ans)){
-			stop(paste0('The length of the elementnames attr (', length(elt.names), ') does not match the number of variables (', nvar(ans), ')'))
-		}
-	}
-	else if(!is.null(attr(x, "varname", exact=TRUE))){
-        elt.names <- coda.names(attr(x, "varname", exact=TRUE),
-                               xdim[-c(which.iter, which.chain)])
-	}
-	
-	if(!is.null(elt.names)){
-        ### Work around bug in coda::varnames<-
+    
+    val.names <- NULL
+    if (!is.null(attr(x, 'valuenames', exact=TRUE))) {
+        ## If valuenames attribute is set then use this
+        val.names <- attr(x, 'valuenames')
+        if (length(val.names) != nvar){
+            stop(paste0('The length of the valuenames attr (', length(val.names), ') does not match the number of variables (', nvar, ')'))
+        }
+    }
+    else {
+        ## Set default value names based on the varname attribute, if
+        ## set. Ignore it it contains square brackets indicating that
+        ## it is already a subset.  Fall back to "x" as a generic
+        ## variable name
+        varname <- attr(x, "varname", exact=TRUE)
+        if (is.null(varname) || grepl("\\[", varname)) {
+            varname <- "x"
+        }
+        val.names <-  make.coda.names(varname, xdim[which.val])
+    }
+    
+    if (!is.null(val.names)) {
         for (i in 1:nchain) {
-            colnames(ans[[i]]) <-elt.names
+            colnames(ans[[i]]) <- val.names
         }
     }
 
-    return(ans)
+    if (isTRUE(na.rm)) {
+        ## Drop missing values if required
+        all.missing <- sapply(ans, function(x) {apply(is.na(x), 2, all)})
+        drop.vars <- if (is.matrix(all.missing)) {
+                         apply(all.missing, 1, any)
+                     }
+                     else {
+                         any(all.missing)
+                     }
+        ans <- lapply(ans, function(x) x[, !drop.vars, drop=FALSE])
+    }
+    
+    return(mcmc.list(ans))
 }
 

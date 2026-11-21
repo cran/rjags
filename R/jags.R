@@ -1,18 +1,18 @@
-#  R package rjags file R/jags.R
-#  Copyright (C) 2006-2013 Martyn Plummer
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License version
-#  2 as published by the Free Software Foundation.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
-#
+##  R package rjags file R/jags.R
+##  Copyright (C) 2006-2024 Martyn Plummer
+##
+##  This program is free software; you can redistribute it and/or
+##  modify it under the terms of the GNU General Public License version
+##  2 as published by the Free Software Foundation.
+##
+##  This program is distributed in the hope that it will be useful,
+##  but WITHOUT ANY WARRANTY; without even the implied warranty of
+##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+##  GNU General Public License for more details.
+##
+##  A copy of the GNU General Public License is available at
+##  http://www.r-project.org/Licenses/
+##
 
 .quiet.messages <- function(quiet)
 {
@@ -40,7 +40,8 @@ print.jags <- function(x, ...)
 }
 
 jags.model <- function(file, data=NULL, inits,
-                       n.chains = 1, n.adapt=1000, quiet=FALSE)
+                       n.chains = 1, n.adapt=1000, quiet = FALSE,
+                       n.threads = n.chains, initrep=10000)
 {
     if (missing(file)) {
         stop("Model file name missing")
@@ -83,15 +84,15 @@ jags.model <- function(file, data=NULL, inits,
         data <- list()
     }
     else if (is.environment(data)) {
-        ##Get a list of numeric objects from the supplied environment
+        ## Get a list of numeric objects from the supplied environment
         data <- mget(varnames, envir=data, mode="numeric",
                      ifnotfound=list(NULL))
-        ##Strip null entries
+        ## Strip null entries
         data <- data[!sapply(data, is.null)]
     }
     else if (is.list(data)) {
         v <- names(data)
-        if (is.null(v) && length(v) != 0) {
+        if (is.null(v) && length(data) != 0) {
             stop("data must be a named list")
         }
         if (any(nchar(v)==0)) {
@@ -107,11 +108,10 @@ jags.model <- function(file, data=NULL, inits,
         for (i in seq(along=unused.variables)) {
             warning("Unused variable \"", unused.variables[i], "\" in data")
         }
-        ### Check for data frames
+        ## Coerce data frames to numeric matrices
         df <- which(as.logical(sapply(data, is.data.frame)))
         for (i in seq(along=df)) {
             if (all(sapply(data[[df[i]]], is.numeric))) {
-                #Turn numeric data frames into matrices
                 data[[df[i]]] <- as.matrix(data[[df[i]]])
             }
             else {
@@ -124,8 +124,24 @@ jags.model <- function(file, data=NULL, inits,
         stop("data must be a list or environment")
     }
 
-    .Call("compile", p, data, as.integer(n.chains), TRUE, PACKAGE="rjags")
+    ## An entry consisting entirely of NAs is logical, not numeric.
+    ## We coerce it to numeric to avoid failing the numeric test below.
+    for (i in seq_along(data)) {
+        if (all(is.na(data[[i]]))) {
+            mode(data[[i]]) <- "numeric"
+        }
+    }
+    
+    ## Warn about non-numeric data
+    num_vals <- sapply(data, is.numeric)
+    if (any(!num_vals)) {
+        warning(paste("Non-numeric data values supplied for variable(s) ",
+                      paste(names(data)[!num_vals], collapse=", "), sep=""))
+    }
 
+    .Call("compile", p, data, as.integer(n.chains), TRUE, PACKAGE="rjags")
+    .Call("set_nthread", p, as.integer(n.threads), PACKAGE="rjags")
+    
 ### Setting initial values
 
     if (!missing(inits) && !is.null(inits))  {
@@ -162,6 +178,12 @@ jags.model <- function(file, data=NULL, inits,
                 warning(paste("NULL initial value supplied for variable(s) ",
                         paste(inames[null.inits], collapse=", "), sep=""))
                 inits <- inits[!null.inits]
+            }
+
+            ## Coerce entries consisting entirely of NAs to numeric.
+            na.inits <- sapply(inits, function(x) all(is.na(x)))
+            for (i in which(na.inits)) {
+                mode(inits[[i]]) <- "numeric"
             }
 
             num_vals <- sapply(inits, is.numeric)
@@ -229,7 +251,21 @@ jags.model <- function(file, data=NULL, inits,
         }
     }
 
-    .Call("initialize", p, PACKAGE="rjags")
+    initrep <- as.integer(initrep)
+    if (length(initrep) == 0 || any(initrep < 0) || any(!is.finite(initrep))) {
+        initrep <- 10000
+        warning("Ignoring invalid intrep argument")
+    }
+    if (length(initrep) == 1) {
+        nrep1 <- nrep2 <- initrep
+    }
+    else {
+        nrep1 <- as.integer(initrep[1])
+        nrep2 <- as.integer(initrep[2])
+        if (length(initrep) > 2)
+            warning("Using only the first two elements of initrep")
+    }
+    .Call("initialize3", p, nrep1, nrep2, PACKAGE="rjags")
 
     model.state <- .Call("get_state", p, PACKAGE="rjags")
     model.data <- .Call("get_data", p, PACKAGE="rjags")
@@ -362,101 +398,139 @@ parse.varnames <- function(varnames)
 {
   names <- character(length(varnames))
   lower <- upper <- vector("list", length(varnames))
+  ## Reserved names start with an underscore and are not valid variable names in JAGS
+  isreserved <- grepl("_([a-zA-Z]+)([a-zA-Z0-9]*)_", varnames)
   for (i in seq(along=varnames)) {
-    y <- parse.varname(varnames[i])
-    if (is.null(y)) {
-      stop(paste("Invalid variable subset", varnames[i]))
-    }
-    names[i] <- y$name
-    if (!is.null(y$lower)) {
-      lower[[i]] <- y$lower
-    }
-    if (!is.null(y$upper)) {
-      upper[[i]] <- y$upper
-    }
+      if (isreserved[i]) {
+          names[i] <- varnames[i]
+      }
+      else {
+          y <- parse.varname(varnames[i])
+          if (is.null(y)) {
+              stop(paste("Invalid variable subset", varnames[i]))
+          }
+          names[i] <- y$name
+          if (!is.null(y$lower)) {
+              lower[[i]] <- y$lower
+          }
+          if (!is.null(y$upper)) {
+              upper[[i]] <- y$upper
+          }
+      }
   }
   return(list(names=names, lower=lower, upper=upper))
 }
 
 
 jags.samples <-
-  function(model, variable.names, n.iter, thin=1, type="trace", force.list=FALSE, ...)
+  function(model, variable.names, n.iter, thin=1, stat="value", summary="trace", simplify=2, ...)
 {
     if (!inherits(model, "jags"))
-      stop("Invalid JAGS model")
+        stop("Invalid JAGS model")
 
     if (!is.character(variable.names) || length(variable.names) == 0)
-      stop("variable.names must be a character vector")
-
+        stop("'variable.names' must be a character vector")
     if (!is.numeric(n.iter) || length(n.iter) != 1 || n.iter <= 0)
-      stop("n.iter must be a positive integer")
+        stop("n.iter must be a positive integer")
     if (!is.numeric(thin) || length(thin) != 1 || thin <= 0)
-      stop("thin must be a positive integer")
-    if (!is.character(type) || length(type) == 0)
-      stop("type must be a character vector")
+        stop("'thin' must be a positive integer")
+    if (!is.character(stat) || length(stat) == 0)
+        stop("'stat' must be a character vector")
+    if (!is.character(summary) || length(summary) == 0)
+        stop("'summary' must be a character vector")
+    if (length(simplify) != 1)
+        stop("'simplify' must be a scalar")
+    if (!is.logical(simplify) && !is.numeric(simplify)) 
+        stop("'simplify' must be numeric or logical")
 
-    ####  Allow vectorisation of type argument and variable.names argument
-    if(length(type)==1){
-      type <- rep(type, length(variable.names))
-    }else if(length(variable.names)==1){
-      variable.names <- rep(variable.names, length(type))
+    ##  Allow vectorisation of arguments stat, summary, and variable.names
+    Nmon <- max(length(stat), length(summary), length(variable.names))
+    if (Nmon > 1) {
+        if (length(stat) == 1)  stat <- rep(stat, Nmon)
+        if (length(summary) == 1)  summary <- rep(summary, Nmon)
+        if (length(variable.names) == 1) variable.names <- rep(variable.names, Nmon)
     }
-    if(length(type)!=length(variable.names))
-      stop("non matching lengths of monitor type and variable.names")
-
-    ####  Set monitors must be called for each relevant monitor type
-    status <- lapply(unique(type), function(t){
-        pn <- parse.varnames(variable.names[type==t])
-        status <- .Call("set_monitors", model$ptr(), pn$names, pn$lower, pn$upper,
-            as.integer(thin), t, PACKAGE="rjags")
-    })
-    names(status) <- unique(type)
-    if (!any(unlist(status))) stop("No valid monitors set")
-
-	startiter <- model$iter()
-	n.iter <- n.iter - n.iter%%thin
-
+    if (length(stat) != length(summary) || length(stat) != length(variable.names))
+        stop("non-matching lengths of monitor stat, summary, and variable.names")
+    
+    ## Catch equivalent var and variance types:
+    summary[summary=="variance"] <- "var"
+	
+    ## Catch bug in JAGS <= 5.0.1 with loo_leverage and leverage_total:
+    if (jags.version() <= "5.0.1" && 
+        any(c("loo_leverage","leverage_total") %in% stat)) {
+      stop("The loo_leverage and leverage_total statistics require JAGS 5.0.2 or later")
+    }    
+	
+    ##  set_monitors must be called for each relevant monitor type
+    pn <- parse.varnames(variable.names)
+    status <- .Call("set_monitors", model$ptr(), pn$names, pn$lower, pn$upper,
+                    as.integer(thin), stat, summary, PACKAGE="rjags")
+    if (!any(status)) stop("No valid monitors set")
+    
+    startiter <- model$iter()
+    n.iter <- n.iter - n.iter%%thin
+    
     update.jags(model, n.iter, ...)
-
-    ####  Retrieve values for each monitor type being used
-    usingtypes <- unique(type)[sapply(unique(type), function(t) return(any(status[[t]])))]
-    allans <- lapply(usingtypes, function(t){
-        ans <- .Call("get_monitored_values", model$ptr(), t, PACKAGE="rjags")
-        for (i in seq(along=ans)) {
-	        class(ans[[i]]) <- "mcarray"
-			attr(ans[[i]], "varname") <- names(ans)[i]
-
-			# Assure there is a valid dim attribute for pooled scalar nodes:
-			if(is.null(dim(ans[[i]]))){
-				dim(ans[[i]]) <- length(ans[[i]])
-			}
-
-			# New attributes for rjags_4-7:
-	        attr(ans[[i]], "type") <- t
-	        attr(ans[[i]], "iterations") <- c(start=startiter+thin, end=startiter+n.iter, thin=thin)
+    
+    ##  Retrieve values for each monitor  used
+    stats.used <- unique(stat[status])
+    val <- vector("list", length(stats.used))
+    names(val) <- stats.used
+    for (i in seq_along(stats.used)) {
+        s <- stats.used[i]
+        summary.used <- unique(summary[stat == s & status])
+        val[[i]] <- vector("list", length(summary.used))
+        names(val[[i]]) <- summary.used
+        for (j in seq_along(summary.used)) {
+            t <- summary.used[j]
+            ans <- .Call("get_monitored_values", model$ptr(), s, t, PACKAGE="rjags")
+            for (k in seq(along=ans)) {
+                tname <- names(ans)[k]
+                curdim <- dim(ans[[k]])
+                
+                ## Ensure dim and dimnames are correctly set:
+                if(is.null(curdim)){
+                    curdim <- length(ans[[k]])
+                    dim(ans[[k]]) <- curdim
+                }
+                
+                class(ans[[k]]) <- "mcarray"
+                attr(ans[[k]], "varname") <- tname
+                attr(ans[[k]], "stat") <- s
+                attr(ans[[k]], "summary") <- t
+                attr(ans[[k]], "iterations") <- c(start=startiter+thin, end=startiter+n.iter, thin=thin)
+            }
+            val[[i]][[j]] <- ans
         }
-        pn <- parse.varnames(variable.names[type==t])
-        for (i in seq(along=variable.names[type==t])) {
-            if (status[[t]][i]) {
-                .Call("clear_monitor", model$ptr(), pn$names[i], pn$lower[[i]],
-                      pn$upper[[i]], t, PACKAGE="rjags")
+    }
+    for (i in seq(along=variable.names)) {
+        if (status[i]) {
+            .Call("clear_monitor", model$ptr(), pn$names[i], pn$lower[[i]],
+                  pn$upper[[i]], stat[i], summary[i], PACKAGE="rjags")
+        }
+    }
+    
+    ##  Remove any that are empty:
+    ##allans <- allans[lapply(allans, length) > 0]
+
+    if (is.logical(simplify)) {
+        simplify <- if (simplify) 3 else 0
+    }
+    if (simplify > 0) {
+        ## Recursively simplify the return value up to max depth
+        ## determinined by the 'simplify' parameter
+        for (i in 1:min(simplify, 3)) {
+            if (length(val) == 1) {
+                val <- val[[1]]
+            }
+            else {
+                break
             }
         }
-        return(ans)
-    })
-
-    ####  The return value is a named list of monitor types
-    names(allans) <- usingtypes
-
-	####  Remove any that are empty:
-	allans <- allans[sapply(allans, length) > 0]
-
-    ####  And if all monitors are of the same type and !force.list then return
-    ####  just a single element for back compatibility with rjags < 4-7
-    if(!force.list && length(usingtypes)==1)
-      allans <- allans[[1]]
-
-    return(allans)
+    }
+    
+    return(val)
 }
 
 list.samplers <- function(object)
@@ -533,12 +607,29 @@ nchain <- function(model)
     .Call("get_nchain", model$ptr(), PACKAGE="rjags")
 }
 
+nthread <- function(model)
+{
+    if (!inherits(model, "jags"))
+        stop("Invalid JAGS model object in nchain")
+    
+    .Call("get_nthread", model$ptr(), PACKAGE="rjags")
+}
+
+`nthread<-` <- function(model, value)
+{
+    if (!inherits(model, "jags"))
+        stop("Invalid JAGS model object in nthread")
+
+    .Call("set_nthread", model$ptr(), as.integer(value), PACKAGE="rjags")
+}
+
 coda.samples <- function(model, variable.names=NULL, n.iter, thin=1,
                          na.rm = TRUE, ...)
 {
     start <- model$iter() + thin
-    out <- jags.samples(model, variable.names, n.iter, thin, type="trace", ...)
-
+    out <- jags.samples(model, variable.names, n.iter, thin, stat="value", summary="trace",
+                        simplify=FALSE, ...)$value$trace
+    
     ans <- vector("list", nchain(model))
     for (ch in 1:nchain(model)) {
         ans.ch <- vector("list", length(out))
@@ -587,7 +678,7 @@ coda.samples <- function(model, variable.names=NULL, n.iter, thin=1,
 }
 
 load.module <- function(name, path, quiet=FALSE)
-{
+{   
     if (name %in% list.modules()) {
         ## This is a stop-gap measure as JAGS 2.1.0 does allow you
         ## to load the same module twice. This should be fixed in
@@ -632,7 +723,7 @@ load.module <- function(name, path, quiet=FALSE)
 }
 
 unload.module <- function(name, quiet=FALSE)
-{
+{   
     if (!is.character(name) || length(name) != 1)
         stop("invalid name")
 
@@ -641,7 +732,7 @@ unload.module <- function(name, quiet=FALSE)
         warning(paste("module", name, "not loaded"))
     }
     else if (!quiet) {
-        message("module", name, "unloaded\n", sep=" ")
+        message("module ", name, " unloaded\n", sep=" ")
     }
     invisible()
 }
@@ -665,3 +756,8 @@ parallel.seeds <- function(factory, nchain)
 {
     .Call("parallel_seeds", factory, nchain, PACKAGE="rjags")
 }
+
+jags.seed <- function(seed) {
+    .Call("set_seed", seed, PACKAGE="rjags")
+}
+    

@@ -7,8 +7,8 @@
   of the prior distribution, and a set of data.
 }
 \usage{
- jags.model(file, data, inits,
-            n.chains = 1, n.adapt=1000, quiet=FALSE)
+ jags.model(file, data=NULL, inits, n.chains = 1, n.adapt=1000,
+            quiet=FALSE, n.threads = n.chains, initrep=10000)
 }
 \arguments{
   \item{file}{the name of the file containing a description of the model in the
@@ -30,6 +30,9 @@
     adaptation takes place.}
   \item{quiet}{if \code{TRUE} then messages generated during compilation
     will be suppressed, as well as the progress bar during adaptation.}
+  \item{n.threads}{the number of threads to use for parallel updating}
+  \item{initrep}{Number of replicate samples to draw from the prior when
+    initializing the unobserved stochastic nodes. Set below.}
 }
 \value{
   \code{jags.model} returns an object inheriting from class \code{jags}
@@ -59,10 +62,9 @@
 }
 \section{Initialization}{
 
-  There are various ways to specify initial values for a JAGS model.
-  If no initial values are supplied, then they will be generated
-  automatically by JAGS. See the JAGS User Manual for
-  details. Otherwise, the options are as follows:
+  Initial values may be supplied for unobserved stochastic nodes via
+  the \code{inits} argument.  There are various ways to specify initial values:
+
   \enumerate{
     \item A list of numeric values. Initial values for a single chain
     may supplied as a named list of numeric values. If there are multiple
@@ -82,6 +84,29 @@
     way, initial values may be generated that depend systematically on
     the chain number.
   }
+  
+  If initial values are not supplied then they will be generated
+  automatically. This process is controlled by the \code{initrep}
+  argument. Setting \code{initrep=1} draws initial values from the prior
+  distribution.  For \code{initrep > 1} the initial value is a summary
+  of \code{initrep} replicate samples from the prior:
+  \itemize{
+    \item For unbounded continuous parameters, the initial values is the
+    sample mean.
+    \item For discrete and bounded parameters, the initial value is the
+    sample with the highest prior density.
+  }
+  As \code{initrep} increases these initial values tend to the prior
+  mean and prior mode respectively. The default value
+  \code{initrep=10000} is designed for maximal compatibility with
+  earlier versions of JAGS which set initial values to a deterministic
+  ``typical value'' of the prior distribution. A large value of
+  \code{initrep} is necessary when the model contains diffuse priors,
+  such as a normal distribution with very low precision. It can be
+  reduced for informative or weakly-informative priors.
+
+  For more fine-grained control over initialization, the \code{initrep}
+  argument may be a vector of length 2. See the JAGS manual for details.
 }
 
 \section{Random number generators}{

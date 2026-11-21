@@ -22,14 +22,14 @@ parallel.seeds(factory, nchain)
   \item{.RNG.state}{An integer vector giving the state of the RNG.}
 }
 \note{
-  It is not yet possible to make the results of \code{parallel.seeds}
-  reproducible.  This will be fixed in a future version of JAGS.
+  To make the results of \code{parallel.seeds} reproducible, the
+  function \code{jags.seed} should be called first.
 }
 \examples{
 ##The BaseRNG factory generates up to four distinct types of RNG. If
 ##more than 4 chains are requested, it will recycle the RNG types, but
 ##use different initial values
-parallel.seeds("base::BaseRNG", 3)
+parallel.seeds("base::BaseRNG", 4)
 
 ## The lecuyer module provides the RngStream factory, which allows large
 ## numbers of independent parallel RNGs to be generated. 
@@ -43,5 +43,7 @@ parallel.seeds("lecuyer::RngStream", 5);
   for further details on RNG initialization;
   \code{\link{list.factories}} to find the names of available RNG
   factories.
+  \code{\link{jags.seed}} to set the seed for the random number
+  generators used by JAGS.
 }
 \keyword{models}

@@ -129,7 +129,8 @@
       stop("An unexpected error occured while linking to the JAGS installation at\n\t", jags.home, "\n\tMake sure that you have a JAGS ", jags.major, ".x.y installation that is binary\n\tcompatible with your R installation (your current R platform is\n\t", R.Version()$platform, ").\n\n\tThe error returned from library.dynam(...) was:\n\t", conditionMessage(e), call.=FALSE)
     })
 
-### Set the module directory
+### Set the module directory:
+
     if (is.null(getOption("jags.moddir"))) {
       .rjags_env$DEFAULT_MODDIR <- file.path(jags.home, .Platform$r_arch,
                                              "modules")
@@ -149,6 +150,7 @@
     tryCatch ({
       load.module("basemod", quiet=TRUE)
       load.module("bugs", quiet=TRUE)
+      load.module("diag", quiet=TRUE)
     }, error = function(e){
       stop("An unexpected error occured while loading rjags modules at\n\t", moddir, "\n\tIf you have recently reinstalled rjags then restart R and try again.\n\tOtherwise, make sure that your JAGS ", jags.major, ".x.y installation is binary\n\tcompatible with your R installation (your current R platform is\n\t", R.Version()$platform, ").\n\n\tThe error returned from load.module(...) was:\n\t", conditionMessage(e), call.=FALSE)
     })

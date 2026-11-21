@@ -18,22 +18,6 @@ pkg.compile.flags <- function(type = c("ALL", "JAGS_ROOT", "JAGS_VERSION", "RJAG
 {
 
   flags <- get.compile.flags()
-
-  ## For compatibility with JAGS 4->5 transition on macOS only:
-  if (.Platform$OS.type=="unix" &&
-      as.numeric(flags$JAGS_VERSION[,1])==4 &&
-      flags[["CPPFLAGS"]] == "-I/usr/local/include/JAGS" &&
-      !dir.exists("/usr/local/include/JAGS") &&
-      dir.exists("/opt/jags/versions/jags/current-4/include/JAGS")
-  ) {
-    flags[["CPPFLAGS"]] <- "-I/opt/jags/versions/jags/current-4/include/JAGS"
-    ## Note: do not change JAGS_ROOT etc to preserve equivalence
-    ## This does introduce false positive if rjags_4.x is compiled locally
-    ## (with /opt/jags/versions/jags/current-4) and and a package module is
-    ## compiled on r-universe/CRAN (with /usr/local) but that should be rare
-  }
-  ## Note: the above code can be removed for rjags_5.x
-
   type <- match.arg(type)
   value <- c(flags, "ALL"=list(flags))[[type]]
 
@@ -64,7 +48,9 @@ load.pkg.module <- function(pkgname, libname, bin.compat,
   stopifnot(!is.na(maj.vers.pkg),
             length(maj.vers.pkg)==1L,
             !is.na(maj.vers.pkg))
-  if (maj.vers.pkg != maj.vers.rjags) {
+  if (maj.vers.pkg > maj.vers.rjags) {
+    stop("Mismatched JAGS major versions:\n\t", pkgname, ": ", maj.vers.pkg, "\n\trjags: ", maj.vers.rjags, "\n\nYou should either try installing an updated version of the rjags\npackage, or re-compile the ", pkgname, " pacakge.", call.=FALSE)
+  }else if(maj.vers.pkg != maj.vers.rjags) {
     stop("Mismatched JAGS major versions:\n\t", pkgname, ": ", maj.vers.pkg, "\n\trjags: ", maj.vers.rjags, "\n\nThe ", pkgname, " package must either be recompiled or reinstalled\nfollowing recompilation on CRAN.", call.=FALSE)
   }
 

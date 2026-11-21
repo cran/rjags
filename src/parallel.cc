@@ -76,13 +76,11 @@ extern "C" {
 	string factory = stringArg(fac);
 	
 	vector<RNG*> rngvec;
-	list<pair<RNGFactory*,bool> > const &flist = Model::rngFactories();
-	for (list<pair<RNGFactory*, bool> >::const_iterator p = flist.begin(); 
-	     p != flist.end(); ++p) 
-	{
-	    if (p->first->name() == factory) {
-		if (p->second) {
-		    rngvec = p->first->makeRNGs(nchain);
+	list<RNGFactory*> const &flist = Model::rngFactories();
+	for (auto p = flist.begin(); p != flist.end(); ++p) {
+	    if ((*p)->name() == factory) {
+		if ((*p)->isActive()) {
+		    rngvec = (*p)->makeRNGs(nchain);
 		    break;
 		}
 		else {

@@ -1,4 +1,4 @@
-AC_INIT([rjags],[4])
+AC_INIT([rjags],[5])
 
 if test -z "${R_HOME}"; then
    AC_MSG_ERROR("R_HOME is not defined")

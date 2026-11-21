@@ -1,22 +1,22 @@
 Package: rjags
-Version: 4-18
-Date: 2026-10-28
+Version: 5-5
+Date: 2026-11-16
 Title: Bayesian Graphical Models using MCMC
 Authors@R: c(person("Martyn", "Plummer", role=c("aut","cre"),
                     email="martyn.plummer@gmail.com"),
              person("Alexey", "Stukalov", role="ctb"),
              person("Matt", "Denwood", role="aut"))
 Depends: R (>= 2.14.0), coda (>= 0.13)
-SystemRequirements: JAGS 4.x.y
+SystemRequirements: JAGS (>= 5.0.0)
 Suggests: tcltk
 Description: Interface to the JAGS MCMC library.
 License: GPL (== 2)
 URL: https://mcmc-jags.sourceforge.io
 NeedsCompilation: yes
-Packaged: 2026-11-01 17:35:09 UTC; martyn
+Packaged: 2026-11-16 20:48:57 UTC; martyn
 Author: Martyn Plummer [aut, cre],
   Alexey Stukalov [ctb],
   Matt Denwood [aut]
 Maintainer: Martyn Plummer <martyn.plummer@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-11-01 20:30:08 UTC
+Date/Publication: 2026-11-21 07:40:02 UTC

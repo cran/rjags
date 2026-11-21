@@ -15,19 +15,28 @@ Contents:
 1 Windows
 ---------
 
-If you are compiling the rjags package from source on Windows then you must
-supply the location of JAGS using the make variable JAGS_ROOT,
-defining it in the file HOME/.R/Makevars.win, e.g.
-
-JAGS_ROOT=c:/Progra~1/JAGS/JAGS-4.0.0
-
-where HOME is the default starting directory for an R session launched
-from the start menu (typically your Documents folder).
-
 If you are installing the Windows binary rjags package, then R will
 consult the Windows registry to find the location of JAGS.
 Alternatively, you can specify the location of JAGS by setting the
 environment variable JAGS_HOME.
+
+If you are compiling the rjags package from source on Windows then you must
+supply the location of JAGS using the make variable JAGS_HOME, by adding a
+line such as
+
+JAGS_HOME=c:/Progra~1/JAGS/JAGS-5.0.0
+
+or more simply
+
+JAGS_HOME=c:/Progra~1/JAGS/
+
+to the file HOME/.R/Makevars.win, where HOME is the default starting
+directory for an R session launched from the start menu (typically
+your Documents folder). This is optional if you have a default
+installation of JAGS in C:/Program Files/JAGS or 
+C:/Program Files (x86)/JAGS in which case the rjags configure.win
+script will automatically detect the latest version of JAGS (with
+the correct major version number) installed at that location.
 
 2 Unix/Linux: pkg-config
 ------------------------
@@ -76,7 +85,7 @@ If you do not have administrative privileges:
 3) Set the environment variable LD_RUN_PATH to the directory
    containing the JAGS library before installing rjags, or
 
-4) Use the --enable-rpath option when installing rjags, i.e. from
+4) On Linux, you may use the --enable-rpath option, i.e. from
    the unix shell:
 
    R CMD INSTALL --configure-args='--enable-rpath' rjags
@@ -100,10 +109,21 @@ You may also consider:
 
 Installation on macOS is similar to the case on Unix/Linux, although
 the process is streamlined for compatibility with the official macOS
-installer of JAGS. This allows rjags to be installed on macOS without
-the need for any additional dependencies (other than pkg-config) or
-setting any environmental variables (including PKG_CONFIG_PATH).
+installer of JAGS as follows:
+
+- The "full" installer (JAGS-5.x.y-universal.pkg) also contains
+  pkgconf-lite, which is used by the rjags configure script if
+  pkg-config is not installed on the system (which is the case
+  on vanilla installations of macOS).
+  
+- If a valid installation of JAGS (matching the correct version
+  number) is not found under the default PKG_CONFIG_PATH, then
+  the rjags configure script checks under the versioned /opt/jags
+  subdirectory for a suitable JAGS installation.
+
+This allows rjags to be installed on macOS without the need for
+any additional dependencies or setting any environmental variables.
 It also allows for switching between installations of different
 major versions of rjags (e.g. between rjags_4-x and rjags_5-x)
-without needing to re-install JAGS, assuming that an official macOS
-binary of JAGS 4.x.y is present on your system.
+without needing to re-install JAGS, assuming that the official macOS
+installer is used.

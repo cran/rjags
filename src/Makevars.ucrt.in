@@ -1,0 +1,11 @@
+## Important note for authors of R packages implementing JAGS modules:
+## DO NOT copy this file as part of your own package, as we now
+## have a simplified configuration mechanism for R packages compiling
+## against JAGS and importing rjags.  See the JAGS developer manual.
+##    - Matt Denwood, 2026-10-24
+
+PKG_LIBS = -L"@JAGS_ROOT@/${R_ARCH}/bin" -ljags-5
+PKG_CXXFLAGS =
+PKG_CPPFLAGS = -I"@JAGS_ROOT@/include"
+
+PKG_CFLAGS = -DRJAGS_CPPFLAGS='$(PKG_CPPFLAGS)' -DRJAGS_CXXFLAGS='$(PKG_CXXFLAGS)' -DRJAGS_LIBS='$(PKG_LIBS)' -DJAGS_ROOT='@JAGS_ROOT@'

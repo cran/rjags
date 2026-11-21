@@ -40,13 +40,14 @@ using std::FILE;
 using jags::SArray;
 using jags::Console;
 using jags::SimpleRange;
-using jags::DUMP_DATA;
-using jags::DUMP_PARAMETERS;
+using jags::DATA_VALUES;
+using jags::PARAMETER_VALUES;
 using jags::FactoryType;
 using jags::SAMPLER_FACTORY;
 using jags::MONITOR_FACTORY;
 using jags::RNG_FACTORY;
 using jags::RNG;
+using jags::DimTag;
 
 #define R_NO_REMAP
 #include <R.h>
@@ -167,14 +168,14 @@ static void writeDataTable(SEXP data, map<string,SArray> &table)
 	    SEXP dim = Rf_getAttrib(VECTOR_ELT(data, i), R_DimSymbol); 
 	    if (dim == R_NilValue) {
 		// Scalar or vector entry.
-		SArray sarray(vector<unsigned int>(1, Rf_length(e)));
+		SArray sarray(vector<unsigned long>(1, Rf_length(e)));
 		setSArrayValue(sarray, e);
 		table.insert(pair<string,SArray>(ename, sarray));
 	    }
 	    else {
 		// Array entry
 		int ndim = Rf_length(dim);
-		vector<unsigned int> idim(ndim);
+		vector<unsigned long> idim(ndim);
 		for (int j = 0; j < ndim; ++j) {
 		    idim[j] = INTEGER(dim)[j];
 		}
@@ -199,7 +200,7 @@ static SimpleRange makeRange(SEXP lower, SEXP upper)
     SEXP il, iu;
     PROTECT(il = AS_INTEGER(lower));
     PROTECT(iu = AS_INTEGER(upper));
-    vector<int> lvec(n), uvec(n);
+    vector<unsigned long> lvec(n), uvec(n);
     copy(INTEGER(il), INTEGER(il) + n, lvec.begin());
     copy(INTEGER(iu), INTEGER(iu) + n, uvec.begin());
     UNPROTECT(2); //il, iu
@@ -229,8 +230,7 @@ static SEXP readDataTable(map<string,SArray> const &table)
 	int len = p->second.length();
 
 	//Allocate new numeric vector
-	SEXP e;
-	PROTECT(e = Rf_allocVector(REALSXP, len));
+	SEXP e = PROTECT(Rf_allocVector(REALSXP, len));
 
 	//Copy values
 	vector<double> const &value = p->second.value();
@@ -242,36 +242,36 @@ static SEXP readDataTable(map<string,SArray> const &table)
 	       NUMERIC_POINTER(e)[j] = value[j];
             }
 	}
-    
+
+	
 	if (p->second.ndim(false) > 1) {
 
 	    //Set dim attribute
-	    vector<unsigned int> const &idim = p->second.dim(false);
+	    vector<unsigned long> const &idim = p->second.dim(false);
 	    unsigned int ndim = idim.size();
 	    SEXP dim;
 	    PROTECT(dim = Rf_allocVector(INTSXP, ndim));
 	    for (unsigned int k = 0; k < ndim; ++k) {
 		INTEGER(dim)[k] = idim[k];
 	    }
-
-	    //Set names of the dimensions 
-	    vector<string> const &names = p->second.dimNames();
-	    if (!names.empty()) {
-		SEXP dimnames;
-		PROTECT(dimnames = Rf_allocVector(STRSXP, ndim));
-		for (unsigned int k = 0; k < ndim; ++k) {
-		    SET_STRING_ELT(dimnames, k, Rf_mkChar(names[k].c_str()));
-		}
-		Rf_setAttrib(dim, R_NamesSymbol, dimnames);
-		UNPROTECT(1); //dimnames
-	    }
 	    SET_DIM(e, dim);
 	    UNPROTECT(1); //dim
+
+	    //Set dim tags 
+	    vector<DimTag> const &tags = p->second.dimTags();
+	    if (!tags.empty()) {
+		SEXP stags = PROTECT(Rf_allocVector(STRSXP, tags.size()));
+		for (unsigned int k = 0; k < tags.size(); ++k) {
+		    SET_STRING_ELT(stags, k, Rf_mkChar(asChar(tags[k])));
+		}
+		Rf_setAttrib(e, Rf_install("dimtags"), stags);
+		UNPROTECT(1); //stags
+	    }
 
 	    //Set S dimnames
 	    bool set_s_dimnames = false;
 	    for (unsigned int k = 0; k < ndim; ++k) {
-		if (!p->second.getSDimNames(k).empty()) {
+		if (!p->second.dimNames(k).empty()) {
 		    set_s_dimnames = true;
 		    break;
 		}
@@ -280,7 +280,7 @@ static SEXP readDataTable(map<string,SArray> const &table)
 		SEXP sdimnames;
 		PROTECT(sdimnames = Rf_allocVector(VECSXP, ndim));
 		for (unsigned int k = 0; k < ndim; ++k) {
-		    vector<string> const &names_k = p->second.getSDimNames(k);
+		    vector<string> const &names_k = p->second.dimNames(k);
 		    if (names_k.empty()) {
 			SET_VECTOR_ELT(sdimnames, k, R_NilValue);
 		    }
@@ -288,29 +288,29 @@ static SEXP readDataTable(map<string,SArray> const &table)
 			SEXP snames_k;
 			PROTECT(snames_k = Rf_allocVector(STRSXP, names_k.size()));
 			for (unsigned int l = 0; l < names_k.size(); ++l) {
-			    SET_STRING_ELT(sdimnames, l, 
+			    SET_STRING_ELT(snames_k, l, 
 					   Rf_mkChar(names_k[l].c_str()));
 			}
+			SET_VECTOR_ELT(sdimnames, k, snames_k);
 			UNPROTECT(1); //snames_k
 		    }
 		}
 		Rf_setAttrib(e, R_DimNamesSymbol, sdimnames);
 		UNPROTECT(1); //sdimnames
 	    }
-	}
-	else if (!p->second.getSDimNames(0).empty()) {
 
-	    //Set names attribute
-	    SEXP snames;
-	    vector<string> const &names = p->second.getSDimNames(0);
-	    PROTECT(snames = Rf_allocVector(STRSXP, names.size()));
-	    for (unsigned int l = 0; l < names.size(); ++l) {
-		SET_STRING_ELT(snames, l,  Rf_mkChar(names[l].c_str()));
+	    vector<string> const &value_names = p->second.valueNames();
+	    if (!value_names.empty()) {
+		//Set valuenames attribute
+		SEXP vnames;
+		PROTECT(vnames = Rf_allocVector(STRSXP, value_names.size()));
+		for (unsigned int l = 0; l < value_names.size(); ++l) {
+		    SET_STRING_ELT(vnames, l,  Rf_mkChar(value_names[l].c_str()));
+		}
+		Rf_setAttrib(e, Rf_install("valuenames"), vnames);
+		UNPROTECT(1); //vnames
 	    }
-	    Rf_setAttrib(e, R_NamesSymbol, snames);
-	    UNPROTECT(1); //snames
 	}
-	    
 	SET_ELEMENT(data, i, e);
 	UNPROTECT(1); //e
     }
@@ -387,6 +387,27 @@ extern "C" {
 	R_RegisterCFinalizer(ptr, (R_CFinalizer_t) clear_console);
 	return ptr;
     }
+
+    SEXP get_nthread(SEXP ptr) {
+	return Rf_ScalarInteger(ptrArg(ptr)->nthread());
+    }
+    
+    SEXP set_nthread(SEXP ptr, SEXP nthread)
+    {
+	if (!Rf_isNumeric(nthread)) {
+	    Rf_error("nthread must be numeric");
+	}
+
+	int n = intArg(nthread);
+	if (n < 1) {
+	    Rf_warning("ignoring nthread < 1");
+	}
+	else {
+	    bool status = ptrArg(ptr)->setNThread(intArg(nthread));
+	    printMessages(status);
+	}
+	return R_NilValue;
+    }  
   
     SEXP check_model(SEXP ptr, SEXP name)
     {
@@ -418,8 +439,7 @@ extern "C" {
 
 	map<string, SArray> table;
 	writeDataTable(data, table);
-	bool status = ptrArg(ptr)->compile(table, intArg(nchain),
-					   boolArg(gendata));
+	bool status = ptrArg(ptr)->compile(table, intArg(nchain), boolArg(gendata));
 	printMessages(status);
 	return R_NilValue;
     }
@@ -442,10 +462,18 @@ extern "C" {
   
     SEXP initialize(SEXP ptr)
     {
-	bool status = ptrArg(ptr)->initialize();
+	bool status = ptrArg(ptr)->initialize(1UL, 1UL);
 	printMessages(status);
 	return R_NilValue;
     }
+
+    SEXP initialize3(SEXP ptr, SEXP nrep1, SEXP nrep2)
+    {
+	bool status = ptrArg(ptr)->initialize(intArg(nrep1), intArg(nrep2));
+	printMessages(status);
+	return R_NilValue;
+    }
+
 
     SEXP check_adaptation(SEXP ptr)
     {
@@ -480,7 +508,7 @@ extern "C" {
     }
 
     SEXP set_monitors(SEXP ptr, SEXP names, SEXP lower, SEXP upper, 
-		      SEXP thin, SEXP type)
+		      SEXP thin, SEXP stat, SEXP summary)
     {
 	if (!Rf_isString(names)) {
 	    Rf_error("names must be a character vector");
@@ -490,15 +518,19 @@ extern "C" {
 	if (Rf_length(lower) != n || Rf_length(upper) != n) {
 	    Rf_error("length of names must match length of lower and upper");
 	}
-
+	if (Rf_length(stat) != n || Rf_length(summary) != n) {
+	    Rf_error("length of names must match length of stat and summary");
+	}
+	
 	SEXP status; //Was attempt to set monitor successful?
 	PROTECT(status = Rf_allocVector(LGLSXP, n));
 	for (int i = 0; i < n; ++i) {
 	    SimpleRange range = makeRange(VECTOR_ELT(lower, i), 
 					  VECTOR_ELT(upper, i));
-	    bool ok = ptrArg(ptr)->setMonitor(stringArg(names,i), range, 
+	    bool ok = ptrArg(ptr)->setMonitor(stringArg(names, i), range, 
 					      intArg(thin), 
-					      stringArg(type));
+					      stringArg(stat, i),
+					      stringArg(summary, i));
 	    printMessages(true);
 	    LOGICAL_POINTER(status)[i] = ok;
 	}
@@ -506,29 +538,29 @@ extern "C" {
 	return status;
     }
 
-    SEXP clear_monitor(SEXP ptr, SEXP name, SEXP lower, SEXP upper, SEXP type)
+    SEXP clear_monitor(SEXP ptr, SEXP name, SEXP lower, SEXP upper, SEXP stat, SEXP summary)
     {
         SimpleRange range = makeRange(lower, upper);
 	bool status = ptrArg(ptr)->clearMonitor(stringArg(name), range, 
-						stringArg(type));
+						stringArg(stat),
+						stringArg(summary));
 	printMessages(status);
 	return R_NilValue;
     }
 
-    SEXP get_monitored_values(SEXP ptr, SEXP type)
+    SEXP get_monitored_values(SEXP ptr, SEXP stat, SEXP summary)
     {
 	map<string,SArray> data_table;
-	bool status = ptrArg(ptr)->dumpMonitors(data_table, stringArg(type),
-						false);
+	bool status = ptrArg(ptr)->dumpMonitors(data_table, stringArg(stat), stringArg(summary), false);
 	printMessages(status);
 	return readDataTable(data_table);
     }
 
     //FIXME: lazy cut-and-paste here
-    SEXP get_monitored_values_flat(SEXP ptr, SEXP type)
+    SEXP get_monitored_values_flat(SEXP ptr, SEXP stat, SEXP summary)
     {
 	map<string,SArray> data_table;
-	bool status = ptrArg(ptr)->dumpMonitors(data_table, stringArg(type),
+	bool status = ptrArg(ptr)->dumpMonitors(data_table, stringArg(stat), stringArg(summary),
 						true);
 	printMessages(status);
 	return readDataTable(data_table);
@@ -538,7 +570,7 @@ extern "C" {
     {
 	map<string,SArray> data_table;
 	string rngname; //Not actually needed
-	bool status = ptrArg(ptr)->dumpState(data_table, rngname, DUMP_DATA, 1);
+	bool status = ptrArg(ptr)->dumpState(data_table, rngname, DATA_VALUES, 1);
 	printMessages(status);
 	return readDataTable(data_table);
     }
@@ -557,7 +589,7 @@ extern "C" {
 	for (unsigned int n = 0; n < nchain; ++n) {
 	    string srng;
 	    map<string,SArray> param_table;
-	    console->dumpState(param_table, srng, DUMP_PARAMETERS, n+1);
+	    console->dumpState(param_table, srng, PARAMETER_VALUES, n+1);
 	    //Read the parameter values into an R list
 	    SEXP params;
 	    PROTECT(params = readDataTable(param_table));
@@ -590,6 +622,21 @@ extern "C" {
     {
 	Console *console = ptrArg(ptr);
 	vector<string> const &namevec = console->variableNames();
+	SEXP varnames;
+	PROTECT(varnames = Rf_allocVector(STRSXP,namevec.size()));
+	for (unsigned int i = 0; i < namevec.size(); ++i) {
+	    SET_STRING_ELT(varnames, i, Rf_mkChar(namevec[i].c_str()));
+	}
+	UNPROTECT(1); //varnames
+	return varnames;
+    }
+
+
+    SEXP get_obs_stoch_names(SEXP ptr)
+    {
+	Console *console = ptrArg(ptr);
+	vector<string> namevec;
+	console->dumpNodeNames(namevec, "observed");
 	SEXP varnames;
 	PROTECT(varnames = Rf_allocVector(STRSXP,namevec.size()));
 	for (unsigned int i = 0; i < namevec.size(); ++i) {
@@ -704,4 +751,11 @@ extern "C" {
 	return Rf_mkString(jags_version());
     }
 
+    SEXP set_seed(SEXP s)
+    {
+	unsigned int seed = intArg(s);
+	Console::setRNGSeed(seed);
+	return R_NilValue;
+    }
+    
 }
